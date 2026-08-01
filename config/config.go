@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	Textures TextureConfig
 }
 
 type ServerConfig struct {
@@ -27,8 +28,14 @@ type DatabaseConfig struct {
 	Charset  string
 }
 
+// TextureConfig 保存材质文件存放配置。
+type TextureConfig struct {
+	StorageDir string
+}
+
 const ConfigFileName = "config.yaml"
 const ConfigFileDir = "./"
+const ConfigVersion = "1"
 
 var AppConfig *Config
 
@@ -37,7 +44,7 @@ func Load() {
 
 	// 默认值，config 文件缺失或未配置时兜底。
 	// 数据库默认值沿用 HRPAuth，便于共用同一数据库。
-	port := ":8080"
+	port := ":2701"
 	database := DatabaseConfig{
 		Host:     "127.0.0.1",
 		DBName:   "hrpa",
@@ -45,21 +52,24 @@ func Load() {
 		Password: "hrpa",
 		Charset:  "utf8mb4",
 	}
+	textures := TextureConfig{
+		StorageDir: "./data/textures",
+	}
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Printf("Warning: failed to read config file %s: %v, using defaults", configPath, err)
 	} else {
-		var yamlConfig map[string]interface{}
+		var yamlConfig map[string]any
 		if err := yaml.Unmarshal(data, &yamlConfig); err != nil {
 			log.Fatalf("Failed to parse config file: %v", err)
 		}
-		if server, ok := yamlConfig["server"].(map[string]interface{}); ok {
+		if server, ok := yamlConfig["server"].(map[string]any); ok {
 			if p := getString(server, "port"); p != "" {
 				port = p
 			}
 		}
-		if db, ok := yamlConfig["database"].(map[string]interface{}); ok {
+		if db, ok := yamlConfig["database"].(map[string]any); ok {
 			if v := getString(db, "host"); v != "" {
 				database.Host = v
 			}
@@ -76,6 +86,11 @@ func Load() {
 				database.Charset = v
 			}
 		}
+		if textureCfg, ok := yamlConfig["textures"].(map[string]any); ok {
+			if v := getString(textureCfg, "storage_dir"); v != "" {
+				textures.StorageDir = v
+			}
+		}
 	}
 
 	AppConfig = &Config{
@@ -83,12 +98,13 @@ func Load() {
 			Port: port,
 		},
 		Database: database,
+		Textures: textures,
 	}
 
 	log.Println("Configuration loaded successfully")
 }
 
-func getString(m map[string]interface{}, key string) string {
+func getString(m map[string]any, key string) string {
 	if m == nil {
 		return ""
 	}

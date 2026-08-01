@@ -10,10 +10,14 @@ import (
 )
 
 func main() {
+	startupCtrl := controllers.NewStartupController()
+	if err := startupCtrl.InitializeConfig(); err != nil {
+		log.Fatalf("Failed to initialize config: %v", err)
+	}
+
 	config.Load()
 	database.Init()
 
-	startupCtrl := controllers.NewStartupController()
 	if err := startupCtrl.EnsureMigrations(); err != nil {
 		log.Fatalf("Failed to ensure database migrations: %v", err)
 	}

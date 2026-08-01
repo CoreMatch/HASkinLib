@@ -1,0 +1,11 @@
+database:
+  charset: utf8mb4
+  db_name: hrpa
+  host: 10.117.46.218
+  password: hrpa
+  user: hrpa
+server:
+  port: :2701
+textures:
+  storage_dir: ./data/textures
+version: "1"
