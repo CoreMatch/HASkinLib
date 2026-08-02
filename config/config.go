@@ -31,6 +31,7 @@ type DatabaseConfig struct {
 // TextureConfig 保存材质文件存放配置。
 type TextureConfig struct {
 	StorageDir             string
+	PreviewStorageDir      string
 	MaxUploadBytes         int64
 	MaxRequestBytes        int64
 	RateLimitPerMinute     int
@@ -39,7 +40,7 @@ type TextureConfig struct {
 
 const ConfigFileName = "config.yaml"
 const ConfigFileDir = "./"
-const ConfigVersion = "2"
+const ConfigVersion = "3"
 
 var AppConfig *Config
 
@@ -58,6 +59,7 @@ func Load() {
 	}
 	textures := TextureConfig{
 		StorageDir:             "./data/textures",
+		PreviewStorageDir:      "./data/previews",
 		MaxUploadBytes:         2 << 20,
 		MaxRequestBytes:        (2 << 20) + (256 << 10),
 		RateLimitPerMinute:     5,
@@ -97,6 +99,9 @@ func Load() {
 		if textureCfg, ok := yamlConfig["textures"].(map[string]any); ok {
 			if v := getString(textureCfg, "storage_dir"); v != "" {
 				textures.StorageDir = v
+			}
+			if v := getString(textureCfg, "preview_storage_dir"); v != "" {
+				textures.PreviewStorageDir = v
 			}
 			if v := getInt64(textureCfg, "max_upload_bytes"); v > 0 {
 				textures.MaxUploadBytes = v

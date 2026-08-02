@@ -39,6 +39,7 @@ type TextureList struct {
 	Width       int       `gorm:"not null;default:0;column:width"`
 	Height      int       `gorm:"not null;default:0;column:height"`
 	FileName    string    `gorm:"type:varchar(255);column:file_name"`
+	PreviewFile string    `gorm:"type:varchar(255);column:previewfile"`
 	Name        string    `gorm:"type:varchar(255);column:name"`
 	Description string    `gorm:"type:text;column:description"`
 	Tags        string    `gorm:"type:varchar(255);column:tags"`

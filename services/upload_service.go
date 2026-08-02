@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"image/color"
 	"image/draw"
 	"image/png"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/HugoSmits86/nativewebp"
 	"github.com/lnb/HRPAuth-Backend-Go/config"
 	"github.com/lnb/HRPAuth-Backend-Go/database"
 	"github.com/lnb/HRPAuth-Backend-Go/models"
@@ -29,6 +31,8 @@ var (
 	ErrInvalidSkinSize     = errors.New("skin texture must be 64x32 or 64x64")
 	ErrInvalidCapeSize     = errors.New("cape texture must be 64x32 or 22x17")
 )
+
+const previewScale = 8
 
 type UploadTextureInput struct {
 	Type             string
@@ -65,7 +69,16 @@ func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.
 	}
 
 	hash := calculateHash(fileData)
+	previewData, err := generatePreviewImage(fileData, textureType, model)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to generate texture preview: %w", err)
+	}
+
 	if saveErr := saveTextureFile(hash, fileData); saveErr != nil {
+		return nil, false, saveErr
+	}
+	previewFileName := buildPreviewFileName(hash, textureType)
+	if saveErr := savePreviewFile(previewFileName, previewData); saveErr != nil {
 		return nil, false, saveErr
 	}
 
@@ -92,6 +105,7 @@ func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.
 			Width:       width,
 			Height:      height,
 			FileName:    fileName,
+			PreviewFile: previewFileName,
 			Name:        strings.TrimSpace(input.Name),
 			Description: strings.TrimSpace(input.Description),
 			Tags:        normalizedTags,
@@ -108,6 +122,7 @@ func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.
 	existing.Width = width
 	existing.Height = height
 	existing.FileName = fileName
+	existing.PreviewFile = previewFileName
 	existing.Name = strings.TrimSpace(input.Name)
 	existing.Description = strings.TrimSpace(input.Description)
 	existing.Tags = normalizedTags
@@ -212,6 +227,35 @@ func encodePNG(img image.Image) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func encodeWebP(img image.Image) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := nativewebp.Encode(&buf, img, &nativewebp.Options{
+		CompressionLevel: nativewebp.BestCompression,
+	}); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func generatePreviewImage(fileData []byte, textureType, model string) ([]byte, error) {
+	img, err := png.Decode(bytes.NewReader(fileData))
+	if err != nil {
+		return nil, ErrTextureMustBePNG
+	}
+
+	var preview image.Image
+	switch textureType {
+	case "skin":
+		preview = renderSkinPreview(img, model == "slim")
+	case "cape":
+		preview = renderCapePreview(img)
+	default:
+		return nil, ErrInvalidTextureType
+	}
+
+	return encodeWebP(preview)
+}
+
 func calculateHash(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
@@ -239,6 +283,120 @@ func saveTextureFile(hash string, data []byte) error {
 	}
 
 	return nil
+}
+
+func savePreviewFile(fileName string, data []byte) error {
+	storageDir := config.AppConfig.Textures.PreviewStorageDir
+	if storageDir == "" {
+		return errors.New("texture preview storage directory is not configured")
+	}
+
+	if err := os.MkdirAll(storageDir, 0755); err != nil {
+		return fmt.Errorf("failed to create texture preview directory: %w", err)
+	}
+
+	path := filepath.Join(storageDir, fileName)
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return fmt.Errorf("failed to write texture preview file: %w", err)
+	}
+
+	return nil
+}
+
+func buildPreviewFileName(hash, textureType string) string {
+	return hash + "_" + textureType + ".webp"
+}
+
+func renderSkinPreview(src image.Image, slim bool) image.Image {
+	armWidth := 4
+	if slim {
+		armWidth = 3
+	}
+
+	canvasWidth := 8 + (armWidth * 2)
+	base := image.NewNRGBA(image.Rect(0, 0, canvasWidth, 32))
+	draw.Draw(base, base.Bounds(), image.Transparent, image.Point{}, draw.Src)
+
+	torsoX := armWidth
+	headX := torsoX
+	leftArmX := 0
+	rightArmX := torsoX + 8
+	leftLegX := torsoX
+	rightLegX := torsoX + 4
+
+	drawPart(base, src, image.Rect(8, 8, 16, 16), image.Pt(headX, 0))
+	overlayPart(base, src, image.Rect(40, 8, 48, 16), image.Pt(headX, 0))
+
+	drawPart(base, src, image.Rect(20, 20, 28, 32), image.Pt(torsoX, 8))
+	overlayPart(base, src, image.Rect(20, 36, 28, 48), image.Pt(torsoX, 8))
+
+	armFront := image.Rect(44, 20, 44+armWidth, 32)
+	armOverlay := image.Rect(44, 36, 44+armWidth, 48)
+	drawPart(base, src, armFront, image.Pt(leftArmX, 8))
+	drawPart(base, src, armFront, image.Pt(rightArmX, 8))
+	overlayPart(base, src, armOverlay, image.Pt(leftArmX, 8))
+	overlayPart(base, src, armOverlay, image.Pt(rightArmX, 8))
+
+	legFront := image.Rect(4, 20, 8, 32)
+	legOverlay := image.Rect(4, 36, 8, 48)
+	drawPart(base, src, legFront, image.Pt(leftLegX, 20))
+	drawPart(base, src, legFront, image.Pt(rightLegX, 20))
+	overlayPart(base, src, legOverlay, image.Pt(leftLegX, 20))
+	overlayPart(base, src, legOverlay, image.Pt(rightLegX, 20))
+
+	return scaleNearest(base, previewScale)
+}
+
+func renderCapePreview(src image.Image) image.Image {
+	base := image.NewNRGBA(image.Rect(0, 0, 10, 16))
+	draw.Draw(base, base.Bounds(), image.Transparent, image.Point{}, draw.Src)
+
+	// The 10x16 outer cape face is the most recognizable flat preview area.
+	drawPart(base, src, image.Rect(1, 1, 11, 17), image.Point{})
+	return scaleNearest(base, previewScale)
+}
+
+func drawPart(dst draw.Image, src image.Image, srcRect image.Rectangle, dstMin image.Point) {
+	draw.Draw(dst, image.Rectangle{Min: dstMin, Max: dstMin.Add(srcRect.Size())}, src, srcRect.Min, draw.Src)
+}
+
+func overlayPart(dst draw.Image, src image.Image, srcRect image.Rectangle, dstMin image.Point) {
+	if !rectFits(src.Bounds(), srcRect) {
+		return
+	}
+
+	draw.Draw(dst, image.Rectangle{Min: dstMin, Max: dstMin.Add(srcRect.Size())}, src, srcRect.Min, draw.Over)
+}
+
+func rectFits(bounds, rect image.Rectangle) bool {
+	return rect.Min.X >= bounds.Min.X &&
+		rect.Min.Y >= bounds.Min.Y &&
+		rect.Max.X <= bounds.Max.X &&
+		rect.Max.Y <= bounds.Max.Y
+}
+
+func scaleNearest(src image.Image, factor int) image.Image {
+	if factor <= 1 {
+		return src
+	}
+
+	srcBounds := src.Bounds()
+	dst := image.NewNRGBA(image.Rect(0, 0, srcBounds.Dx()*factor, srcBounds.Dy()*factor))
+	for y := 0; y < srcBounds.Dy(); y++ {
+		for x := 0; x < srcBounds.Dx(); x++ {
+			c := color.NRGBAModel.Convert(src.At(srcBounds.Min.X+x, srcBounds.Min.Y+y)).(color.NRGBA)
+			fillScaledPixel(dst, x*factor, y*factor, factor, c)
+		}
+	}
+	return dst
+}
+
+func fillScaledPixel(dst *image.NRGBA, startX, startY, size int, c color.NRGBA) {
+	for y := 0; y < size; y++ {
+		for x := 0; x < size; x++ {
+			dst.SetNRGBA(startX+x, startY+y, c)
+		}
+	}
 }
 
 func normalizeTags(tags string) string {

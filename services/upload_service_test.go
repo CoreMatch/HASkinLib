@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/HugoSmits86/nativewebp"
 )
 
 func TestNormalizeTextureParams(t *testing.T) {
@@ -82,6 +84,46 @@ func TestReadTextureFileNormalizesLegacyCape(t *testing.T) {
 	}
 	if normalized.Width != 64 || normalized.Height != 32 {
 		t.Fatalf("expected normalized png canvas 64x32, got %dx%d", normalized.Width, normalized.Height)
+	}
+}
+
+func TestGeneratePreviewImageForSkin(t *testing.T) {
+	data, _, _, err := readTextureFile(newPNGReader(t, 64, 64), "skin")
+	if err != nil {
+		t.Fatalf("expected valid png, got error: %v", err)
+	}
+
+	previewData, err := generatePreviewImage(data, "skin", "slim")
+	if err != nil {
+		t.Fatalf("expected preview generation to succeed, got error: %v", err)
+	}
+
+	cfg, err := nativewebp.DecodeConfig(bytes.NewReader(previewData))
+	if err != nil {
+		t.Fatalf("expected valid webp preview, got error: %v", err)
+	}
+	if cfg.Width != 112 || cfg.Height != 256 {
+		t.Fatalf("unexpected skin preview size: %dx%d", cfg.Width, cfg.Height)
+	}
+}
+
+func TestGeneratePreviewImageForCape(t *testing.T) {
+	data, _, _, err := readTextureFile(newPNGReader(t, 64, 32), "cape")
+	if err != nil {
+		t.Fatalf("expected valid png, got error: %v", err)
+	}
+
+	previewData, err := generatePreviewImage(data, "cape", "default")
+	if err != nil {
+		t.Fatalf("expected preview generation to succeed, got error: %v", err)
+	}
+
+	cfg, err := nativewebp.DecodeConfig(bytes.NewReader(previewData))
+	if err != nil {
+		t.Fatalf("expected valid webp preview, got error: %v", err)
+	}
+	if cfg.Width != 80 || cfg.Height != 128 {
+		t.Fatalf("unexpected cape preview size: %dx%d", cfg.Width, cfg.Height)
 	}
 }
 

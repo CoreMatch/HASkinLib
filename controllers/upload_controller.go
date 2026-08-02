@@ -48,6 +48,7 @@ type uploadTextureResponse struct {
 	Width       int    `json:"width"`
 	Height      int    `json:"height"`
 	FileName    string `json:"file_name"`
+	PreviewFile string `json:"preview_file"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Tags        string `json:"tags"`
@@ -254,6 +255,7 @@ func buildUploadTextureResponse(texture *models.TextureList) uploadTextureRespon
 		Width:       texture.Width,
 		Height:      texture.Height,
 		FileName:    texture.FileName,
+		PreviewFile: texture.PreviewFile,
 		Name:        texture.Name,
 		Description: texture.Description,
 		Tags:        texture.Tags,

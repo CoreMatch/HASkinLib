@@ -58,6 +58,7 @@ func (sc *StartupController) buildDefaultConfig() map[string]any {
 		},
 		"textures": map[string]any{
 			"storage_dir":               "./data/textures",
+			"preview_storage_dir":       "./data/previews",
 			"max_upload_bytes":          2 << 20,
 			"max_request_bytes":         (2 << 20) + (256 << 10),
 			"rate_limit_per_minute":     5,
@@ -134,13 +135,15 @@ func (sc *StartupController) checkAndMigrateConfig(path string) error {
 
 func (sc *StartupController) ensureTextureStorageDir(cfg map[string]any) error {
 	textures, _ := cfg["textures"].(map[string]any)
-	storageDir, _ := textures["storage_dir"].(string)
-	if storageDir == "" {
-		return nil
-	}
+	for _, key := range []string{"storage_dir", "preview_storage_dir"} {
+		storageDir, _ := textures[key].(string)
+		if storageDir == "" {
+			continue
+		}
 
-	if err := os.MkdirAll(storageDir, 0755); err != nil {
-		return fmt.Errorf("failed to create texture storage directory %s: %v", storageDir, err)
+		if err := os.MkdirAll(storageDir, 0755); err != nil {
+			return fmt.Errorf("failed to create texture storage directory %s: %v", storageDir, err)
+		}
 	}
 	return nil
 }
