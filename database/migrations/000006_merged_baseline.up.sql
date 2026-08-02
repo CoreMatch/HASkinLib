@@ -1,4 +1,5 @@
--- 将 texture_list 拆分为 texture_list_skin / texture_list_cape，并移除 type 列。
+-- HASkinLib 数据库基准迁移 (合并版本 000002 - 000006)
+-- 包含皮肤 (skin) 和披风 (cape) 纹理列表，去除了冗余的 type 列和披风模型的 model 列。
 
 CREATE TABLE IF NOT EXISTS `texture_list_skin` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -39,6 +40,7 @@ CREATE TABLE IF NOT EXISTS `texture_list_cape` (
   CONSTRAINT `texture_list_cape_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `users` (`uid`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 处理旧表迁移（如果存在旧的 texture_list 表）
 SET @has_old_texture_list := (
   SELECT COUNT(*)
   FROM information_schema.TABLES
