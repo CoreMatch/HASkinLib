@@ -32,9 +32,9 @@ func (User) TableName() string {
 // TextureList 映射 HASkinLib 自有表 texture_list。
 type TextureList struct {
 	ID          uint      `gorm:"primaryKey;autoIncrement;column:id"`
-	Hash        string    `gorm:"type:varchar(64);uniqueIndex:uk_texture_list_hash;column:hash"`
-	Type        string    `gorm:"type:enum('skin','cape');not null;column:type"`
-	UID         uint      `gorm:"column:uid;index:idx_texture_list_uid"`
+	Hash        string    `gorm:"type:varchar(64);column:hash;uniqueIndex:uk_texture_list_uid_hash_type,priority:2"`
+	Type        string    `gorm:"type:enum('skin','cape');not null;column:type;uniqueIndex:uk_texture_list_uid_hash_type,priority:3"`
+	UID         uint      `gorm:"column:uid;index:idx_texture_list_uid;uniqueIndex:uk_texture_list_uid_hash_type,priority:1"`
 	Model       string    `gorm:"type:enum('default','slim');default:'default';column:model"`
 	Width       int       `gorm:"not null;default:0;column:width"`
 	Height      int       `gorm:"not null;default:0;column:height"`

@@ -25,8 +25,10 @@ func main() {
 	r := gin.Default()
 
 	exampleCtrl := controllers.NewExampleController()
+	uploadCtrl := controllers.NewUploadController()
 
 	r.GET("/example", exampleCtrl.Hello)
+	r.POST("/texture/upload", uploadCtrl.UploadTexture)
 
 	log.Printf("server listening on %s", config.AppConfig.Server.Port)
 
