@@ -1,6 +1,6 @@
 module github.com/lnb/HRPAuth-Backend-Go
 
-go 1.26.4
+go 1.25.0
 
 require (
 	github.com/HugoSmits86/nativewebp v1.3.0
