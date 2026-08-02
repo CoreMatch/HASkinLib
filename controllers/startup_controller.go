@@ -19,8 +19,8 @@ import (
 )
 
 // ServiceName 本项目在共享 schema_migrations 表中的服务标识。
-// schema_migrations 表由 HA 管理，本项目不创建/修改表结构，
-// 只认 service='HASL' 这一行：不存在则创建，迁移后更新其 version。
+// 若 schema_migrations 不存在，本项目会按当前所需最小结构创建它；
+// 之后只认 service='HASL' 这一行：不存在则创建，迁移后更新其 version。
 const ServiceName = "HASL"
 
 type StartupController struct{}
@@ -177,10 +177,11 @@ func deepCopyValue(v any) any {
 
 // EnsureMigrations 执行自有数据库迁移（轻量执行器，替代 golang-migrate）。
 // 步骤：
-//  1. 确保 schema_migrations.dirty 列存在且默认值为 0（仅兼容，不参与逻辑）；
-//  2. 检查 schema_migrations 中 service='HASL' 的行是否存在，不存在则创建（version=0）；
-//  3. 按文件名顺序执行 embed 的自有迁移（*.up.sql，均为幂等 DDL，不动 users 表）；
-//  4. 将 HASL 行的 version 更新为最新迁移版本。
+//  1. 确保 schema_migrations 表存在；
+//  2. 确保 schema_migrations.dirty 列存在且默认值为 0（仅兼容，不参与逻辑）；
+//  3. 检查 schema_migrations 中 service='HASL' 的行是否存在，不存在则创建（version=0）；
+//  4. 按文件名顺序执行 embed 的自有迁移（*.up.sql，均为幂等 DDL，不动 users 表）；
+//  5. 将 HASL 行的 version 更新为最新迁移版本。
 func (sc *StartupController) EnsureMigrations() error {
 	cfg := config.AppConfig.Database
 	dsn := fmt.Sprintf(
@@ -193,6 +194,10 @@ func (sc *StartupController) EnsureMigrations() error {
 		return fmt.Errorf("failed to open database for migration: %v", err)
 	}
 	defer db.Close()
+
+	if err := sc.ensureMigrationsTable(db, cfg.DBName); err != nil {
+		return err
+	}
 
 	if err := sc.ensureDirtyColumnDefault(db, cfg.DBName); err != nil {
 		return err
@@ -207,6 +212,39 @@ func (sc *StartupController) EnsureMigrations() error {
 	}
 
 	return sc.updateServiceVersion(db)
+}
+
+// ensureMigrationsTable 确保共享 schema_migrations 表存在。
+// 表结构只包含当前项目所需的最小字段：service、version、dirty。
+func (sc *StartupController) ensureMigrationsTable(db *sql.DB, dbName string) error {
+	var tableCount int
+	err := db.QueryRow(`
+		SELECT COUNT(*)
+		FROM information_schema.TABLES
+		WHERE TABLE_SCHEMA = ?
+		  AND TABLE_NAME = 'schema_migrations'
+	`, dbName).Scan(&tableCount)
+	if err != nil {
+		return fmt.Errorf("failed to inspect schema_migrations table: %v", err)
+	}
+
+	if tableCount > 0 {
+		return nil
+	}
+
+	if _, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS schema_migrations (
+			service VARCHAR(64) NOT NULL,
+			version INT NOT NULL DEFAULT 0,
+			dirty TINYINT(1) NOT NULL DEFAULT 0,
+			PRIMARY KEY (service)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+	`); err != nil {
+		return fmt.Errorf("failed to create schema_migrations table: %v", err)
+	}
+
+	log.Printf("Created schema_migrations table")
+	return nil
 }
 
 // ensureDirtyColumnDefault 确保 schema_migrations 的 dirty 列存在且默认值为 0。
@@ -255,7 +293,7 @@ func (sc *StartupController) ensureDirtyColumnDefault(db *sql.DB, dbName string)
 }
 
 // ensureServiceRow 检查 service='HASL' 的行是否存在；不存在则创建（version=0）。
-// 只读写本服务自己的行，不触碰 schema_migrations 表结构及其它服务行。
+// 只读写本服务自己的行，不触碰其它服务行。
 func (sc *StartupController) ensureServiceRow(db *sql.DB) error {
 	var version int
 	err := db.QueryRow("SELECT version FROM schema_migrations WHERE service = ?", ServiceName).Scan(&version)
