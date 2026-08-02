@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"image"
+	"image/draw"
 	"image/png"
 	"io"
 	"os"
@@ -24,6 +26,8 @@ var (
 	ErrInvalidTextureType  = errors.New("texture type must be skin or cape")
 	ErrInvalidTextureModel = errors.New("texture model must be default or slim")
 	ErrTextureNameRequired = errors.New("texture name is required")
+	ErrInvalidSkinSize     = errors.New("skin texture must be 64x32 or 64x64")
+	ErrInvalidCapeSize     = errors.New("cape texture must be 64x32 or 22x17")
 )
 
 type UploadTextureInput struct {
@@ -55,7 +59,7 @@ func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.
 
 	var fileData []byte
 	var width, height int
-	fileData, width, height, err = readTextureFile(input.File)
+	fileData, width, height, err = readTextureFile(input.File, textureType)
 	if err != nil {
 		return nil, false, err
 	}
@@ -136,7 +140,7 @@ func normalizeTextureParams(textureType, model string) (string, string, error) {
 	return normalizedType, normalizedModel, nil
 }
 
-func readTextureFile(file io.Reader) ([]byte, int, int, error) {
+func readTextureFile(file io.Reader, textureType string) ([]byte, int, int, error) {
 	if file == nil {
 		return nil, 0, 0, ErrTextureFileRequired
 	}
@@ -151,7 +155,61 @@ func readTextureFile(file io.Reader) ([]byte, int, int, error) {
 		return nil, 0, 0, ErrTextureMustBePNG
 	}
 
-	return data, cfg.Width, cfg.Height, nil
+	img, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, 0, 0, ErrTextureMustBePNG
+	}
+
+	width := cfg.Width
+	height := cfg.Height
+
+	switch textureType {
+	case "skin":
+		if !isValidSkinSize(width, height) {
+			return nil, 0, 0, ErrInvalidSkinSize
+		}
+	case "cape":
+		if !isValidCapeSize(width, height) {
+			return nil, 0, 0, ErrInvalidCapeSize
+		}
+		if width == 22 && height == 17 {
+			img = normalizeCapeImage(img)
+			width = 64
+			height = 32
+		}
+	default:
+		return nil, 0, 0, ErrInvalidTextureType
+	}
+
+	normalizedData, err := encodePNG(img)
+	if err != nil {
+		return nil, 0, 0, fmt.Errorf("failed to encode normalized texture: %w", err)
+	}
+
+	return normalizedData, width, height, nil
+}
+
+func isValidSkinSize(width, height int) bool {
+	return (width == 64 && height == 32) || (width == 64 && height == 64)
+}
+
+func isValidCapeSize(width, height int) bool {
+	return (width == 64 && height == 32) || (width == 22 && height == 17)
+}
+
+func normalizeCapeImage(img image.Image) image.Image {
+	normalized := image.NewRGBA(image.Rect(0, 0, 64, 32))
+	draw.Draw(normalized, normalized.Bounds(), image.Transparent, image.Point{}, draw.Src)
+	draw.Draw(normalized, img.Bounds(), img, image.Point{}, draw.Src)
+	return normalized
+}
+
+func encodePNG(img image.Image) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func calculateHash(data []byte) string {

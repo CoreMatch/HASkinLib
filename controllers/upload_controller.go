@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lnb/HRPAuth-Backend-Go/config"
 	"github.com/lnb/HRPAuth-Backend-Go/database"
 	"github.com/lnb/HRPAuth-Backend-Go/models"
 	"github.com/lnb/HRPAuth-Backend-Go/services"
@@ -16,11 +18,24 @@ import (
 
 type UploadController struct {
 	uploadService *services.TextureUploadService
+	rateLimiter   *services.UploadRateLimiter
 }
 
+const (
+	defaultMaxTextureUploadBytes        int64 = 2 << 20
+	defaultMaxTextureRequestBytes       int64 = defaultMaxTextureUploadBytes + (256 << 10)
+	defaultUploadRateLimitPerMinute           = 5
+	defaultUploadRateLimitWindowSeconds       = 60
+)
+
 func NewUploadController() *UploadController {
+	textureCfg := config.AppConfig.Textures
 	return &UploadController{
 		uploadService: services.NewTextureUploadService(),
+		rateLimiter: services.NewUploadRateLimiter(
+			getUploadRateLimitPerMinute(textureCfg),
+			time.Duration(getUploadRateLimitWindowSeconds(textureCfg))*time.Second,
+		),
 	}
 }
 
@@ -41,11 +56,37 @@ type uploadTextureResponse struct {
 }
 
 func (uc *UploadController) UploadTexture(c *gin.Context) {
-	rememberToken := extractRememberToken(c)
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, getMaxTextureRequestBytes())
+
+	rememberToken, err := extractRememberToken(c)
+	if err != nil {
+		if isBodyTooLargeError(err) {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+				"success": false,
+				"message": "upload request is too large",
+			})
+			return
+		}
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "failed to parse upload form",
+		})
+		return
+	}
 	if rememberToken == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"message": "remember token is required",
+		})
+		return
+	}
+
+	now := time.Now()
+	if !uc.rateLimiter.Allow("token:"+rememberToken, now) || !uc.rateLimiter.Allow("ip:"+c.ClientIP(), now) {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"message": "upload rate limit exceeded, please try again later",
 		})
 		return
 	}
@@ -88,6 +129,14 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 	if err != nil {
 		fileHeader, err = c.FormFile("texture")
 		if err != nil {
+			if isBodyTooLargeError(err) {
+				c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+					"success": false,
+					"message": "upload request is too large",
+				})
+				return
+			}
+
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "file is required",
@@ -96,8 +145,24 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 		}
 	}
 
+	if fileHeader.Size > getMaxTextureUploadBytes() {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("texture file must be %d bytes or smaller", getMaxTextureUploadBytes()),
+		})
+		return
+	}
+
 	file, err := fileHeader.Open()
 	if err != nil {
+		if isBodyTooLargeError(err) {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{
+				"success": false,
+				"message": "upload request is too large",
+			})
+			return
+		}
+
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "failed to open uploaded file",
@@ -122,6 +187,8 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 		case errors.Is(err, services.ErrInvalidTextureType),
 			errors.Is(err, services.ErrInvalidTextureModel),
 			errors.Is(err, services.ErrTextureMustBePNG),
+			errors.Is(err, services.ErrInvalidSkinSize),
+			errors.Is(err, services.ErrInvalidCapeSize),
 			errors.Is(err, services.ErrTextureNameRequired),
 			errors.Is(err, services.ErrTextureFileRequired):
 			status = http.StatusBadRequest
@@ -148,19 +215,25 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 	})
 }
 
-func extractRememberToken(c *gin.Context) string {
+func extractRememberToken(c *gin.Context) (string, error) {
 	authorization := strings.TrimSpace(c.GetHeader("Authorization"))
 	if strings.HasPrefix(strings.ToLower(authorization), "bearer ") {
-		return strings.TrimSpace(authorization[len("Bearer "):])
+		return strings.TrimSpace(authorization[len("Bearer "):]), nil
+	}
+
+	if strings.HasPrefix(c.ContentType(), "multipart/") {
+		if err := c.Request.ParseMultipartForm(getMaxTextureRequestBytes()); err != nil {
+			return "", err
+		}
 	}
 
 	for _, key := range []string{"remember_token", "rt", "token"} {
 		if value := strings.TrimSpace(c.PostForm(key)); value != "" {
-			return value
+			return value, nil
 		}
 	}
 
-	return ""
+	return "", nil
 }
 
 func findUserByRememberToken(rememberToken string) (*models.User, error) {
@@ -187,4 +260,53 @@ func buildUploadTextureResponse(texture *models.TextureList) uploadTextureRespon
 		CreatedAt:   texture.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   texture.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
+}
+
+func isBodyTooLargeError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if errors.Is(err, http.ErrBodyReadAfterClose) {
+		return false
+	}
+
+	return strings.Contains(strings.ToLower(err.Error()), "request body too large")
+}
+
+func getMaxTextureUploadBytes() int64 {
+	if config.AppConfig == nil || config.AppConfig.Textures.MaxUploadBytes <= 0 {
+		return defaultMaxTextureUploadBytes
+	}
+	return config.AppConfig.Textures.MaxUploadBytes
+}
+
+func getMaxTextureRequestBytes() int64 {
+	if config.AppConfig == nil {
+		return defaultMaxTextureRequestBytes
+	}
+
+	maxRequestBytes := config.AppConfig.Textures.MaxRequestBytes
+	if maxRequestBytes <= 0 {
+		return defaultMaxTextureRequestBytes
+	}
+	maxUploadBytes := getMaxTextureUploadBytes()
+	if maxRequestBytes < maxUploadBytes {
+		return maxUploadBytes
+	}
+	return maxRequestBytes
+}
+
+func getUploadRateLimitPerMinute(textureCfg config.TextureConfig) int {
+	if textureCfg.RateLimitPerMinute <= 0 {
+		return defaultUploadRateLimitPerMinute
+	}
+	return textureCfg.RateLimitPerMinute
+}
+
+func getUploadRateLimitWindowSeconds(textureCfg config.TextureConfig) int {
+	if textureCfg.RateLimitWindowSeconds <= 0 {
+		return defaultUploadRateLimitWindowSeconds
+	}
+	return textureCfg.RateLimitWindowSeconds
 }

@@ -30,12 +30,16 @@ type DatabaseConfig struct {
 
 // TextureConfig 保存材质文件存放配置。
 type TextureConfig struct {
-	StorageDir string
+	StorageDir             string
+	MaxUploadBytes         int64
+	MaxRequestBytes        int64
+	RateLimitPerMinute     int
+	RateLimitWindowSeconds int
 }
 
 const ConfigFileName = "config.yaml"
 const ConfigFileDir = "./"
-const ConfigVersion = "1"
+const ConfigVersion = "2"
 
 var AppConfig *Config
 
@@ -53,7 +57,11 @@ func Load() {
 		Charset:  "utf8mb4",
 	}
 	textures := TextureConfig{
-		StorageDir: "./data/textures",
+		StorageDir:             "./data/textures",
+		MaxUploadBytes:         2 << 20,
+		MaxRequestBytes:        (2 << 20) + (256 << 10),
+		RateLimitPerMinute:     5,
+		RateLimitWindowSeconds: 60,
 	}
 
 	data, err := os.ReadFile(configPath)
@@ -90,6 +98,18 @@ func Load() {
 			if v := getString(textureCfg, "storage_dir"); v != "" {
 				textures.StorageDir = v
 			}
+			if v := getInt64(textureCfg, "max_upload_bytes"); v > 0 {
+				textures.MaxUploadBytes = v
+			}
+			if v := getInt64(textureCfg, "max_request_bytes"); v > 0 {
+				textures.MaxRequestBytes = v
+			}
+			if v := getInt(textureCfg, "rate_limit_per_minute"); v > 0 {
+				textures.RateLimitPerMinute = v
+			}
+			if v := getInt(textureCfg, "rate_limit_window_seconds"); v > 0 {
+				textures.RateLimitWindowSeconds = v
+			}
 		}
 	}
 
@@ -112,4 +132,74 @@ func getString(m map[string]any, key string) string {
 		return value
 	}
 	return ""
+}
+
+func getInt(m map[string]any, key string) int {
+	if m == nil {
+		return 0
+	}
+
+	switch value := m[key].(type) {
+	case int:
+		return value
+	case int8:
+		return int(value)
+	case int16:
+		return int(value)
+	case int32:
+		return int(value)
+	case int64:
+		return int(value)
+	case uint:
+		return int(value)
+	case uint8:
+		return int(value)
+	case uint16:
+		return int(value)
+	case uint32:
+		return int(value)
+	case uint64:
+		return int(value)
+	case float64:
+		return int(value)
+	case float32:
+		return int(value)
+	default:
+		return 0
+	}
+}
+
+func getInt64(m map[string]any, key string) int64 {
+	if m == nil {
+		return 0
+	}
+
+	switch value := m[key].(type) {
+	case int:
+		return int64(value)
+	case int8:
+		return int64(value)
+	case int16:
+		return int64(value)
+	case int32:
+		return int64(value)
+	case int64:
+		return value
+	case uint:
+		return int64(value)
+	case uint8:
+		return int64(value)
+	case uint16:
+		return int64(value)
+	case uint32:
+		return int64(value)
+	case uint64:
+		return int64(value)
+	case float64:
+		return int64(value)
+	case float32:
+		return int64(value)
+	default:
+		return 0
+	}
 }

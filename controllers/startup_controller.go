@@ -57,7 +57,11 @@ func (sc *StartupController) buildDefaultConfig() map[string]any {
 			"charset":  "utf8mb4",
 		},
 		"textures": map[string]any{
-			"storage_dir": "./data/textures",
+			"storage_dir":               "./data/textures",
+			"max_upload_bytes":          2 << 20,
+			"max_request_bytes":         (2 << 20) + (256 << 10),
+			"rate_limit_per_minute":     5,
+			"rate_limit_window_seconds": 60,
 		},
 	}
 }

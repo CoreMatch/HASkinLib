@@ -8,4 +8,8 @@ server:
   port: :2701
 textures:
   storage_dir: ./data/textures
-version: "1"
+  max_upload_bytes: 2097152
+  max_request_bytes: 2359296
+  rate_limit_per_minute: 5
+  rate_limit_window_seconds: 60
+version: "2"
