@@ -51,7 +51,7 @@ func NewTextureUploadService() *TextureUploadService {
 	return &TextureUploadService{}
 }
 
-func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.TextureList, bool, error) {
+func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.TextureRecord, bool, error) {
 	textureType, model, err := normalizeTextureParams(input.Type, input.Model)
 	if err != nil {
 		return nil, false, err
@@ -88,20 +88,26 @@ func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.
 		fileName = hash + ".png"
 	}
 
-	var existing models.TextureList
-	err = database.DB.
-		Where("uid = ? AND hash = ? AND type = ?", input.UID, hash, textureType).
-		First(&existing).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, false, fmt.Errorf("failed to query texture record: %w", err)
+	base := models.TextureListSkinBase{
+		Hash:        hash,
+		UID:         input.UID,
+		Model:       model,
+		Width:       width,
+		Height:      height,
+		FileName:    fileName,
+		PreviewFile: previewFileName,
+		Name:        strings.TrimSpace(input.Name),
+		Description: strings.TrimSpace(input.Description),
+		Tags:        normalizedTags,
 	}
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		texture := &models.TextureList{
+	switch textureType {
+	case "skin":
+		return upsertSkinRecord(textureType, &models.TextureListSkin{TextureListSkinBase: base})
+	case "cape":
+		return upsertCapeRecord(textureType, &models.TextureListCape{
 			Hash:        hash,
-			Type:        textureType,
 			UID:         input.UID,
-			Model:       model,
 			Width:       width,
 			Height:      height,
 			FileName:    fileName,
@@ -109,29 +115,114 @@ func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.
 			Name:        strings.TrimSpace(input.Name),
 			Description: strings.TrimSpace(input.Description),
 			Tags:        normalizedTags,
-		}
+		})
+	default:
+		return nil, false, ErrInvalidTextureType
+	}
+}
 
+func upsertSkinRecord(textureType string, texture *models.TextureListSkin) (*models.TextureRecord, bool, error) {
+	incoming := texture.TextureListSkinBase
+	var existing models.TextureListSkin
+	err := database.DB.
+		Where("uid = ? AND hash = ?", incoming.UID, incoming.Hash).
+		First(&existing).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, false, fmt.Errorf("failed to query texture record: %w", err)
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		if createErr := database.DB.Create(texture).Error; createErr != nil {
 			return nil, false, fmt.Errorf("failed to create texture record: %w", createErr)
 		}
-
-		return texture, true, nil
+		return toSkinTextureRecord(textureType, texture), true, nil
 	}
 
-	existing.Model = model
-	existing.Width = width
-	existing.Height = height
-	existing.FileName = fileName
-	existing.PreviewFile = previewFileName
-	existing.Name = strings.TrimSpace(input.Name)
-	existing.Description = strings.TrimSpace(input.Description)
-	existing.Tags = normalizedTags
+	existing.Model = incoming.Model
+	existing.Width = incoming.Width
+	existing.Height = incoming.Height
+	existing.FileName = incoming.FileName
+	existing.PreviewFile = incoming.PreviewFile
+	existing.Name = incoming.Name
+	existing.Description = incoming.Description
+	existing.Tags = incoming.Tags
 
 	if updateErr := database.DB.Save(&existing).Error; updateErr != nil {
 		return nil, false, fmt.Errorf("failed to update texture record: %w", updateErr)
 	}
 
-	return &existing, false, nil
+	return toSkinTextureRecord(textureType, &existing), false, nil
+}
+
+func upsertCapeRecord(textureType string, texture *models.TextureListCape) (*models.TextureRecord, bool, error) {
+	incoming := *texture
+	var existing models.TextureListCape
+	err := database.DB.
+		Where("uid = ? AND hash = ?", incoming.UID, incoming.Hash).
+		First(&existing).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, false, fmt.Errorf("failed to query texture record: %w", err)
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		if createErr := database.DB.Create(texture).Error; createErr != nil {
+			return nil, false, fmt.Errorf("failed to create texture record: %w", createErr)
+		}
+		return toCapeTextureRecord(textureType, texture), true, nil
+	}
+
+	existing.Width = incoming.Width
+	existing.Height = incoming.Height
+	existing.FileName = incoming.FileName
+	existing.PreviewFile = incoming.PreviewFile
+	existing.Name = incoming.Name
+	existing.Description = incoming.Description
+	existing.Tags = incoming.Tags
+
+	if updateErr := database.DB.Save(&existing).Error; updateErr != nil {
+		return nil, false, fmt.Errorf("failed to update texture record: %w", updateErr)
+	}
+
+	return toCapeTextureRecord(textureType, &existing), false, nil
+}
+
+func toSkinTextureRecord(textureType string, texture *models.TextureListSkin) *models.TextureRecord {
+	base := texture.TextureListSkinBase
+	return &models.TextureRecord{
+		ID:          base.ID,
+		Hash:        base.Hash,
+		Type:        textureType,
+		UID:         base.UID,
+		Model:       base.Model,
+		Width:       base.Width,
+		Height:      base.Height,
+		FileName:    base.FileName,
+		PreviewFile: base.PreviewFile,
+		Name:        base.Name,
+		Description: base.Description,
+		Tags:        base.Tags,
+		CreatedAt:   base.CreatedAt,
+		UpdatedAt:   base.UpdatedAt,
+	}
+}
+
+func toCapeTextureRecord(textureType string, texture *models.TextureListCape) *models.TextureRecord {
+	return &models.TextureRecord{
+		ID:          texture.ID,
+		Hash:        texture.Hash,
+		Type:        textureType,
+		UID:         texture.UID,
+		Model:       "",
+		Width:       texture.Width,
+		Height:      texture.Height,
+		FileName:    texture.FileName,
+		PreviewFile: texture.PreviewFile,
+		Name:        texture.Name,
+		Description: texture.Description,
+		Tags:        texture.Tags,
+		CreatedAt:   texture.CreatedAt,
+		UpdatedAt:   texture.UpdatedAt,
+	}
 }
 
 func normalizeTextureParams(textureType, model string) (string, string, error) {
@@ -142,7 +233,7 @@ func normalizeTextureParams(textureType, model string) (string, string, error) {
 
 	normalizedModel := strings.ToLower(strings.TrimSpace(model))
 	if normalizedType == "cape" {
-		return normalizedType, "default", nil
+		return normalizedType, "", nil
 	}
 
 	if normalizedModel == "" {

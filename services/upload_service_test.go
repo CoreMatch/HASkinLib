@@ -25,8 +25,8 @@ func TestNormalizeTextureParams(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected valid cape params, got error: %v", err)
 	}
-	if textureType != "cape" || model != "default" {
-		t.Fatalf("cape model should be normalized to default, got: %s %s", textureType, model)
+	if textureType != "cape" || model != "" {
+		t.Fatalf("cape model should be empty after normalization, got: %s %s", textureType, model)
 	}
 
 	if _, _, err := normalizeTextureParams("banner", "default"); err != ErrInvalidTextureType {

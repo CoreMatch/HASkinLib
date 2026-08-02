@@ -44,7 +44,7 @@ type uploadTextureResponse struct {
 	Hash        string `json:"hash"`
 	Type        string `json:"type"`
 	UID         uint   `json:"uid"`
-	Model       string `json:"model"`
+	Model       string `json:"model,omitempty"`
 	Width       int    `json:"width"`
 	Height      int    `json:"height"`
 	FileName    string `json:"file_name"`
@@ -245,7 +245,7 @@ func findUserByRememberToken(rememberToken string) (*models.User, error) {
 	return &user, nil
 }
 
-func buildUploadTextureResponse(texture *models.TextureList) uploadTextureResponse {
+func buildUploadTextureResponse(texture *models.TextureRecord) uploadTextureResponse {
 	return uploadTextureResponse{
 		ID:          texture.ID,
 		Hash:        texture.Hash,
