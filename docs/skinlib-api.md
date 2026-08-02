@@ -5,6 +5,7 @@
 - `POST /texture/upload`：上传材质并生成预览图
 - `GET /texture/listpreview`：获取材质预览列表
 - `GET /texture/preview/:preview_file`：直接访问预览图文件
+- `GET /texture/pull/:hash`：根据哈希值直接拉取材质原文件
 
 说明：
 
@@ -390,7 +391,57 @@ curl "http://127.0.0.1:2701/texture/preview/8c9b0f..._skin.webp" --output previe
 <img src="http://127.0.0.1:2701/texture/preview/8c9b0f..._skin.webp" alt="skin preview">
 ```
 
-## 4. 相关配置
+## 4. 获取材质原文件
+
+**端点**
+
+`GET /texture/pull/:hash`
+
+**用途**
+
+按材质文件的 SHA-256 哈希值直接返回原始 PNG 材质文件内容，适合游戏客户端、外部渲染器或需要获取原始像素数据的场景。
+
+**访问方式**
+
+- 公开访问
+- 不需要鉴权
+
+**路径参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|---|---|---:|---|
+| `hash` | string | 是 | 材质文件的 SHA-256 哈希值，必须是 64 位十六进制字符串 |
+
+**来源**
+
+这个值可从以下接口返回中获得：
+
+- `POST /texture/upload` 的 `data.hash`
+- `GET /texture/listpreview` 的 `data.items[].hash`
+
+**成功响应**
+
+- HTTP `200 OK`
+- `Content-Type: image/png`
+- `Cache-Control: public, max-age=86400`
+- 响应体为材质文件二进制内容
+
+**失败响应**
+
+| HTTP | message |
+|---|---|
+| `400` | `texture hash must be a valid 64-character hex string` |
+| `404` | `texture file not found` |
+| `500` | `texture storage directory is not configured` |
+| `500` | `failed to read texture file` |
+
+**curl 示例**
+
+```bash
+curl "http://127.0.0.1:2701/texture/pull/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" --output texture.png
+```
+
+## 5. 相关配置
 
 配置文件中的 `textures` 段与这两组接口直接相关：
 
@@ -412,7 +463,7 @@ textures:
 - `max_request_bytes`：整个上传请求大小上限
 - `rate_limit_per_minute` / `rate_limit_window_seconds`：上传限流配置
 
-## 5. 当前未开放的能力
+## 6. 当前未开放的能力
 
 当前版本还**没有**这些接口：
 

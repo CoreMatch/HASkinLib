@@ -28,11 +28,13 @@ func main() {
 	uploadCtrl := controllers.NewUploadController()
 	listPreviewCtrl := controllers.NewListPreviewController()
 	previewFileCtrl := controllers.NewPreviewFileController()
+	pullTextureCtrl := controllers.NewPullTextureController()
 
 	r.GET("/example", exampleCtrl.Hello)
 	r.POST("/texture/upload", uploadCtrl.UploadTexture)
 	r.GET("/texture/listpreview", listPreviewCtrl.List)
 	r.GET("/texture/preview/:preview_file", previewFileCtrl.Get)
+	r.GET("/texture/pull/:hash", pullTextureCtrl.Pull)
 
 	log.Printf("server listening on %s", config.AppConfig.Server.Port)
 
