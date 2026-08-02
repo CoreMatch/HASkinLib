@@ -48,6 +48,7 @@ func (sc *StartupController) buildDefaultConfig() map[string]any {
 		"version": config.ConfigVersion,
 		"server": map[string]any{
 			"port": ":2701",
+			"cors": "*",
 		},
 		"database": map[string]any{
 			"host":     "127.0.0.1",

@@ -17,6 +17,7 @@ type Config struct {
 
 type ServerConfig struct {
 	Port string
+	CORS string
 }
 
 // DatabaseConfig 数据库连接配置，字段与 HRPAuth 保持一致。
@@ -40,7 +41,7 @@ type TextureConfig struct {
 
 const ConfigFileName = "config.yaml"
 const ConfigFileDir = "./"
-const ConfigVersion = "3"
+const ConfigVersion = "4"
 
 var AppConfig *Config
 
@@ -50,6 +51,7 @@ func Load() {
 	// 默认值，config 文件缺失或未配置时兜底。
 	// 数据库默认值沿用 HRPAuth，便于共用同一数据库。
 	port := ":2701"
+	cors := "*"
 	database := DatabaseConfig{
 		Host:     "127.0.0.1",
 		DBName:   "hrpa",
@@ -77,6 +79,9 @@ func Load() {
 		if server, ok := yamlConfig["server"].(map[string]any); ok {
 			if p := getString(server, "port"); p != "" {
 				port = p
+			}
+			if c := getString(server, "cors"); c != "" {
+				cors = c
 			}
 		}
 		if db, ok := yamlConfig["database"].(map[string]any); ok {
@@ -121,6 +126,7 @@ func Load() {
 	AppConfig = &Config{
 		Server: ServerConfig{
 			Port: port,
+			CORS: cors,
 		},
 		Database: database,
 		Textures: textures,

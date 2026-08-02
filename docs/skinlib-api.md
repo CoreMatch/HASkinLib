@@ -6,6 +6,7 @@
 - `GET /texture/listpreview`：获取材质预览列表
 - `GET /texture/preview/:preview_file`：直接访问预览图文件
 - `GET /texture/pull/:hash`：根据哈希值直接拉取材质原文件
+- `GET /profile/textures`：获取当前登录用户的材质列表（**[状态：暂时搁置]**）
 
 说明：
 
@@ -441,7 +442,62 @@ curl "http://127.0.0.1:2701/texture/preview/8c9b0f..._skin.webp" --output previe
 curl "http://127.0.0.1:2701/texture/pull/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" --output texture.png
 ```
 
-## 5. 相关配置
+## 5. 获取个人材质列表
+
+> **注意：此接口当前状态为 [暂时搁置]**。
+> 后端已完成初步实现，但根据开发计划，该功能目前不对前端开放或暂不启用。
+
+**端点**
+
+`GET /profile/textures`
+
+**鉴权**
+
+需要 `remember token` (与上传接口一致)
+
+**查询参数**
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|---|---|---:|---|---|
+| `type` | string | 否 | `all` | `all`, `skin`, `cape` |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "profile textures retrieved successfully",
+  "data": {
+    "uid": 10001,
+    "items": [
+      {
+        "id": 12,
+        "hash": "8c9b0f...",
+        "type": "skin",
+        "model": "slim",
+        "width": 64,
+        "height": 64,
+        "file_name": "my-skin.png",
+        "preview_file": "8c9b0f..._skin.webp",
+        "name": "Blue Girl",
+        "description": "demo skin",
+        "tags": "展示,蓝色",
+        "created_at": "2026-08-02 12:00:00",
+        "updated_at": "2026-08-02 12:00:00"
+      }
+    ]
+  }
+}
+```
+
+**失败响应**
+
+| HTTP | message |
+|---|---|
+| `401` | `remember token is required` |
+| `401` | `invalid remember token` |
+
+## 6. 相关配置
 
 配置文件中的 `textures` 段与这两组接口直接相关：
 
