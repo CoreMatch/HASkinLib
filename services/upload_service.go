@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/HugoSmits86/nativewebp"
 	"github.com/lnb/HRPAuth-Backend-Go/config"
@@ -31,6 +32,8 @@ var (
 	ErrInvalidSkinSize     = errors.New("skin texture must be 64x32 or 64x64")
 	ErrInvalidCapeSize     = errors.New("cape texture must be 64x32 or 22x17")
 )
+
+const maxTextureNameLength = 20
 
 const previewScale = 8
 
@@ -96,7 +99,7 @@ func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.
 		Height:      height,
 		FileName:    fileName,
 		PreviewFile: previewFileName,
-		Name:        strings.TrimSpace(input.Name),
+		Name:        normalizeTextureName(strings.TrimSpace(input.Name), maxTextureNameLength),
 		Description: strings.TrimSpace(input.Description),
 		Tags:        normalizedTags,
 	}
@@ -112,7 +115,7 @@ func (s *TextureUploadService) UploadTexture(input UploadTextureInput) (*models.
 			Height:      height,
 			FileName:    fileName,
 			PreviewFile: previewFileName,
-			Name:        strings.TrimSpace(input.Name),
+			Name:        normalizeTextureName(strings.TrimSpace(input.Name), maxTextureNameLength),
 			Description: strings.TrimSpace(input.Description),
 			Tags:        normalizedTags,
 		})
@@ -244,6 +247,29 @@ func normalizeTextureParams(textureType, model string) (string, string, error) {
 	}
 
 	return normalizedType, normalizedModel, nil
+}
+
+func normalizeTextureName(name string, maxLength int) string {
+	if maxLength <= 0 {
+		return name
+	}
+
+	if utf8.RuneCountInString(name) <= maxLength {
+		return name
+	}
+
+	var builder strings.Builder
+	builder.Grow(len(name))
+	count := 0
+	for _, r := range name {
+		if count >= maxLength {
+			break
+		}
+		builder.WriteRune(r)
+		count++
+	}
+
+	return builder.String()
 }
 
 func readTextureFile(file io.Reader, textureType string) ([]byte, int, int, error) {

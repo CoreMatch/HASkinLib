@@ -45,6 +45,20 @@ func TestNormalizeTags(t *testing.T) {
 	}
 }
 
+func TestNormalizeTextureName(t *testing.T) {
+	if got := normalizeTextureName("1234567890", 20); got != "1234567890" {
+		t.Fatalf("unexpected short name normalization: %q", got)
+	}
+
+	if got := normalizeTextureName("12345678901234567890abc", 20); got != "12345678901234567890" {
+		t.Fatalf("unexpected truncated name: %q", got)
+	}
+
+	if got := normalizeTextureName("皮肤名称12345678901234567890", 20); got != "皮肤名称1234567890123456" {
+		t.Fatalf("unexpected rune-safe name handling: %q", got)
+	}
+}
+
 func TestReadTextureFile(t *testing.T) {
 	data, width, height, err := readTextureFile(newPNGReader(t, 64, 32), "skin")
 	if err != nil {

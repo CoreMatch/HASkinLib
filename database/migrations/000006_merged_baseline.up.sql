@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `texture_list_skin` (
   `height` int NOT NULL DEFAULT 0 COMMENT '像素高',
   `file_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '原始文件名',
   `previewfile` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '预览图文件名',
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '展示名',
+  `name` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '展示名',
   `description` text COLLATE utf8mb4_unicode_ci COMMENT '描述',
   `tags` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '标签, 逗号分隔',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,

@@ -56,7 +56,7 @@ type TextureListSkinBase struct {
 	Height      int       `gorm:"not null;default:0;column:height"`
 	FileName    string    `gorm:"type:varchar(255);column:file_name"`
 	PreviewFile string    `gorm:"type:varchar(255);column:previewfile"`
-	Name        string    `gorm:"type:varchar(255);column:name"`
+	Name        string    `gorm:"type:varchar(20);column:name"`
 	Description string    `gorm:"type:text;column:description"`
 	Tags        string    `gorm:"type:varchar(255);column:tags"`
 	CreatedAt   time.Time `gorm:"column:created_at"`
@@ -79,7 +79,7 @@ type TextureListCape struct {
 	Height      int       `gorm:"not null;default:0;column:height"`
 	FileName    string    `gorm:"type:varchar(255);column:file_name"`
 	PreviewFile string    `gorm:"type:varchar(255);column:previewfile"`
-	Name        string    `gorm:"type:varchar(255);column:name"`
+	Name        string    `gorm:"type:varchar(20);column:name"`
 	Description string    `gorm:"type:text;column:description"`
 	Tags        string    `gorm:"type:varchar(255);column:tags"`
 	CreatedAt   time.Time `gorm:"column:created_at"`
