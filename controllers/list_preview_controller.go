@@ -47,35 +47,25 @@ type listPreviewItem struct {
 func (lc *ListPreviewController) List(c *gin.Context) {
 	opts, err := parseListPreviewOptions(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
+		respondError(c, http.StatusBadRequest, CodeInvalidRequest, err.Error())
 		return
 	}
 
 	items, total, err := lc.queryPreviewItems(opts)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "failed to query texture preview list",
-		})
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "failed to query texture preview list")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "texture preview list retrieved successfully",
-		"data": gin.H{
-			"items":     items,
-			"filter":    opts.Filter,
-			"order":     opts.Order,
-			"tag":       opts.Tag,
-			"page":      opts.Page,
-			"page_size": opts.Limit,
-			"total":     total,
-			"has_more":  int64(opts.Offset+len(items)) < total,
-		},
+	respondOK(c, "texture preview list retrieved successfully", gin.H{
+		"items":     items,
+		"filter":    opts.Filter,
+		"order":     opts.Order,
+		"tag":       opts.Tag,
+		"page":      opts.Page,
+		"page_size": opts.Limit,
+		"total":     total,
+		"has_more":  int64(opts.Offset+len(items)) < total,
 	})
 }
 

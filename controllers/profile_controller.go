@@ -35,19 +35,13 @@ type profileTextureItem struct {
 func (pc *ProfileController) GetMyTextures(c *gin.Context) {
 	token, err := extractRememberToken(c)
 	if err != nil || token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "remember token is required",
-		})
+		respondError(c, http.StatusUnauthorized, CodeRememberTokenRequired, "remember token is required")
 		return
 	}
 
 	user, err := findUserByRememberToken(token)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "invalid remember token",
-		})
+		respondError(c, http.StatusUnauthorized, CodeInvalidRememberToken, "invalid remember token")
 		return
 	}
 
@@ -105,12 +99,8 @@ func (pc *ProfileController) GetMyTextures(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "profile textures retrieved successfully",
-		"data": gin.H{
-			"uid":   user.UID,
-			"items": items,
-		},
+	respondOK(c, "profile textures retrieved successfully", gin.H{
+		"uid":   user.UID,
+		"items": items,
 	})
 }

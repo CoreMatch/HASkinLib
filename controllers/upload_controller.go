@@ -62,33 +62,21 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 	rememberToken, err := extractRememberToken(c)
 	if err != nil {
 		if isBodyTooLargeError(err) {
-			c.JSON(http.StatusRequestEntityTooLarge, gin.H{
-				"success": false,
-				"message": "upload request is too large",
-			})
+			respondError(c, http.StatusRequestEntityTooLarge, CodeUploadRequestTooLarge, "upload request is too large")
 			return
 		}
 
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "failed to parse upload form",
-		})
+		respondError(c, http.StatusBadRequest, CodeInvalidRequest, "failed to parse upload form")
 		return
 	}
 	if rememberToken == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "remember token is required",
-		})
+		respondError(c, http.StatusUnauthorized, CodeRememberTokenRequired, "remember token is required")
 		return
 	}
 
 	now := time.Now()
 	if !uc.rateLimiter.Allow("token:"+rememberToken, now) || !uc.rateLimiter.Allow("ip:"+c.ClientIP(), now) {
-		c.JSON(http.StatusTooManyRequests, gin.H{
-			"success": false,
-			"message": "upload rate limit exceeded, please try again later",
-		})
+		respondError(c, http.StatusTooManyRequests, CodeUploadRateLimited, "upload rate limit exceeded, please try again later")
 		return
 	}
 
@@ -101,28 +89,23 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 			message = "invalid remember token"
 		}
 
-		c.JSON(status, gin.H{
-			"success": false,
-			"message": message,
-		})
+		code := CodeInternalError
+		if status == http.StatusUnauthorized {
+			code = CodeInvalidRememberToken
+		}
+		respondError(c, status, code, message)
 		return
 	}
 
 	uidValue := strings.TrimSpace(c.PostForm("uid"))
 	uid64, err := strconv.ParseUint(uidValue, 10, 64)
 	if err != nil || uid64 == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "uid must be a positive integer",
-		})
+		respondError(c, http.StatusBadRequest, CodeInvalidRequest, "uid must be a positive integer")
 		return
 	}
 
 	if uint(uid64) != user.UID {
-		c.JSON(http.StatusForbidden, gin.H{
-			"success": false,
-			"message": "remember token does not match the requested uid",
-		})
+		respondError(c, http.StatusForbidden, CodeInvalidRememberToken, "remember token does not match the requested uid")
 		return
 	}
 
@@ -131,43 +114,28 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 		fileHeader, err = c.FormFile("texture")
 		if err != nil {
 			if isBodyTooLargeError(err) {
-				c.JSON(http.StatusRequestEntityTooLarge, gin.H{
-					"success": false,
-					"message": "upload request is too large",
-				})
+				respondError(c, http.StatusRequestEntityTooLarge, CodeUploadRequestTooLarge, "upload request is too large")
 				return
 			}
 
-			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"message": "file is required",
-			})
+			respondError(c, http.StatusBadRequest, CodeTextureFileRequired, "file is required")
 			return
 		}
 	}
 
 	if fileHeader.Size > getMaxTextureUploadBytes() {
-		c.JSON(http.StatusRequestEntityTooLarge, gin.H{
-			"success": false,
-			"message": fmt.Sprintf("texture file must be %d bytes or smaller", getMaxTextureUploadBytes()),
-		})
+		respondError(c, http.StatusRequestEntityTooLarge, CodeUploadRequestTooLarge, fmt.Sprintf("texture file must be %d bytes or smaller", getMaxTextureUploadBytes()))
 		return
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
 		if isBodyTooLargeError(err) {
-			c.JSON(http.StatusRequestEntityTooLarge, gin.H{
-				"success": false,
-				"message": "upload request is too large",
-			})
+			respondError(c, http.StatusRequestEntityTooLarge, CodeUploadRequestTooLarge, "upload request is too large")
 			return
 		}
 
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "failed to open uploaded file",
-		})
+		respondError(c, http.StatusBadRequest, CodeTextureFileInvalid, "failed to open uploaded file")
 		return
 	}
 	defer file.Close()
@@ -194,11 +162,24 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 			errors.Is(err, services.ErrTextureFileRequired):
 			status = http.StatusBadRequest
 		}
-
-		c.JSON(status, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
+		code := CodeTextureUploadFailed
+		switch {
+		case errors.Is(err, services.ErrInvalidTextureType):
+			code = CodeTextureTypeInvalid
+		case errors.Is(err, services.ErrInvalidTextureModel):
+			code = CodeTextureModelInvalid
+		case errors.Is(err, services.ErrTextureMustBePNG):
+			code = CodeTextureFileInvalid
+		case errors.Is(err, services.ErrInvalidSkinSize), errors.Is(err, services.ErrInvalidCapeSize):
+			code = CodeTextureSizeInvalid
+		case errors.Is(err, services.ErrTextureNameRequired):
+			code = CodeTextureNameRequired
+		case errors.Is(err, services.ErrTextureFileRequired):
+			code = CodeTextureFileRequired
+		case status == http.StatusInternalServerError:
+			code = CodeInternalError
+		}
+		respondError(c, status, code, err.Error())
 		return
 	}
 
@@ -208,12 +189,11 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 		message = "texture metadata updated successfully"
 		status = http.StatusOK
 	}
-
-	c.JSON(status, gin.H{
-		"success": true,
-		"message": message,
-		"data":    buildUploadTextureResponse(texture),
-	})
+	if status == http.StatusCreated {
+		respondCreated(c, message, buildUploadTextureResponse(texture))
+		return
+	}
+	respondOK(c, message, buildUploadTextureResponse(texture))
 }
 
 func extractRememberToken(c *gin.Context) (string, error) {
