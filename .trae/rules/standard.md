@@ -1,0 +1,1 @@
+All external logic standards and roadmaps can be found in HA-Contract and Wiki.

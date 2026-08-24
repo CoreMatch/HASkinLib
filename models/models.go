@@ -29,6 +29,45 @@ func (User) TableName() string {
 	return "users"
 }
 
+// OAuth2AccessToken 映射 HRPAuth 的 oauth2_access_tokens 表。
+type OAuth2AccessToken struct {
+	ID        uint      `gorm:"primaryKey;autoIncrement"`
+	UserID    uint      `gorm:"column:user_id;index:idx_token_user_id"`
+	Token     string    `gorm:"type:varchar(64);column:token;uniqueIndex:uk_token"`
+	ExpiresAt time.Time `gorm:"column:expires_at"`
+	CreatedAt time.Time `gorm:"column:created_at"`
+}
+
+func (OAuth2AccessToken) TableName() string {
+	return "oauth2_access_tokens"
+}
+
+// OAuth2RefreshToken 映射 HRPAuth 的 oauth2_refresh_tokens 表。
+type OAuth2RefreshToken struct {
+	ID        uint      `gorm:"primaryKey;autoIncrement"`
+	UserID    uint      `gorm:"column:user_id;index:idx_refresh_user_id"`
+	Token     string    `gorm:"type:varchar(64);column:token;uniqueIndex:uk_refresh_token"`
+	ExpiresAt time.Time `gorm:"column:expires_at"`
+	CreatedAt time.Time `gorm:"column:created_at"`
+}
+
+func (OAuth2RefreshToken) TableName() string {
+	return "oauth2_refresh_tokens"
+}
+
+// Profile 映射 HRPAuth 的 profiles 表。
+type Profile struct {
+	ID        string    `gorm:"primaryKey;type:varchar(32);column:id"`
+	UserID    uint      `gorm:"column:user_id;index:idx_profile_user_id"`
+	Name      string    `gorm:"type:varchar(255);column:name;uniqueIndex:uk_profile_name"`
+	CreatedAt time.Time `gorm:"column:created_at"`
+	UpdatedAt time.Time `gorm:"column:updated_at"`
+}
+
+func (Profile) TableName() string {
+	return "profiles"
+}
+
 // TextureRecord 是接口层使用的统一纹理记录结构。
 type TextureRecord struct {
 	ID          uint
