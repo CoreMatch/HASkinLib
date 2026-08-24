@@ -22,19 +22,13 @@ func NewPreviewFileController() *PreviewFileController {
 func (pc *PreviewFileController) Get(c *gin.Context) {
 	fileName, err := sanitizePreviewFileName(c.Param("preview_file"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
+		respondError(c, http.StatusBadRequest, CodeInvalidRequest, err.Error())
 		return
 	}
 
 	storageDir := config.AppConfig.Textures.PreviewStorageDir
 	if strings.TrimSpace(storageDir) == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "texture preview storage directory is not configured",
-		})
+		respondError(c, http.StatusInternalServerError, CodeStorageNotConfigured, "texture preview storage directory is not configured")
 		return
 	}
 
@@ -42,24 +36,15 @@ func (pc *PreviewFileController) Get(c *gin.Context) {
 	info, statErr := os.Stat(path)
 	if statErr != nil {
 		if errors.Is(statErr, os.ErrNotExist) {
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"message": "preview file not found",
-			})
+			respondError(c, http.StatusNotFound, CodeTexturePreviewNotFound, "preview file not found")
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "failed to read preview file",
-		})
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "failed to read preview file")
 		return
 	}
 	if info.IsDir() {
-		c.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"message": "preview file not found",
-		})
+		respondError(c, http.StatusNotFound, CodeTexturePreviewNotFound, "preview file not found")
 		return
 	}
 

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -93,12 +92,8 @@ func (pc *ProfileController) GetMyTextures(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "profile textures retrieved successfully",
-		"data": gin.H{
-			"uid":   user.UID,
-			"items": items,
-		},
+	respondOK(c, "profile textures retrieved successfully", gin.H{
+		"uid":   user.UID,
+		"items": items,
 	})
 }

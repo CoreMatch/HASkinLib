@@ -66,19 +66,19 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 	accessToken, _ := extractBearerToken(c) // already validated by AuthenticateUser
 	now := time.Now()
 	if !uc.rateLimiter.Allow("token:"+accessToken, now) || !uc.rateLimiter.Allow("ip:"+c.ClientIP(), now) {
-		AbortWithStandardError(c, http.StatusTooManyRequests, "upload_rate_limited", "Upload rate limit exceeded")
+		respondError(c, http.StatusTooManyRequests, CodeUploadRateLimited, "upload rate limit exceeded, please try again later")
 		return
 	}
 
 	uidValue := strings.TrimSpace(c.PostForm("uid"))
 	uid64, err := strconv.ParseUint(uidValue, 10, 64)
 	if err != nil || uid64 == 0 {
-		AbortWithStandardError(c, http.StatusBadRequest, "invalid_request", "uid must be a positive integer")
+		respondError(c, http.StatusBadRequest, CodeInvalidRequest, "uid must be a positive integer")
 		return
 	}
 
 	if uint(uid64) != user.UID {
-		AbortWithStandardError(c, http.StatusForbidden, "oauth_access_denied", "Token does not match the requested uid")
+		respondError(c, http.StatusForbidden, "oauth_access_denied", "Token does not match the requested uid")
 		return
 	}
 
@@ -87,23 +87,23 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 		fileHeader, err = c.FormFile("texture")
 		if err != nil {
 			if isBodyTooLargeError(err) {
-				AbortWithStandardError(c, http.StatusRequestEntityTooLarge, "upload_request_too_large", "Upload request is too large")
+				respondError(c, http.StatusRequestEntityTooLarge, CodeUploadRequestTooLarge, "upload request is too large")
 				return
 			}
 
-			AbortWithStandardError(c, http.StatusBadRequest, "texture_file_required", "Texture file is required")
+			respondError(c, http.StatusBadRequest, CodeTextureFileRequired, "file is required")
 			return
 		}
 	}
 
 	if fileHeader.Size > getMaxTextureUploadBytes() {
-		AbortWithStandardError(c, http.StatusRequestEntityTooLarge, "upload_request_too_large", fmt.Sprintf("Texture file must be %d bytes or smaller", getMaxTextureUploadBytes()))
+		respondError(c, http.StatusRequestEntityTooLarge, CodeUploadRequestTooLarge, fmt.Sprintf("texture file must be %d bytes or smaller", getMaxTextureUploadBytes()))
 		return
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
-		AbortWithStandardError(c, http.StatusBadRequest, "invalid_texture_file", "Failed to open uploaded file")
+		respondError(c, http.StatusBadRequest, CodeTextureFileInvalid, "failed to open uploaded file")
 		return
 	}
 	defer file.Close()
@@ -120,23 +120,23 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 	})
 	if err != nil {
 		status := http.StatusInternalServerError
-		code := "texture_upload_failed"
+		code := CodeTextureUploadFailed
 		switch {
 		case errors.Is(err, services.ErrInvalidTextureType):
-			status, code = http.StatusBadRequest, "invalid_texture_type"
+			status, code = http.StatusBadRequest, CodeTextureTypeInvalid
 		case errors.Is(err, services.ErrInvalidTextureModel):
-			status, code = http.StatusBadRequest, "invalid_texture_model"
+			status, code = http.StatusBadRequest, CodeTextureModelInvalid
 		case errors.Is(err, services.ErrTextureMustBePNG):
-			status, code = http.StatusBadRequest, "invalid_texture_file"
+			status, code = http.StatusBadRequest, CodeTextureFileInvalid
 		case errors.Is(err, services.ErrInvalidSkinSize), errors.Is(err, services.ErrInvalidCapeSize):
-			status, code = http.StatusBadRequest, "invalid_texture_size"
+			status, code = http.StatusBadRequest, CodeTextureSizeInvalid
 		case errors.Is(err, services.ErrTextureNameRequired):
-			status, code = http.StatusBadRequest, "texture_name_required"
+			status, code = http.StatusBadRequest, CodeTextureNameRequired
 		case errors.Is(err, services.ErrTextureFileRequired):
-			status, code = http.StatusBadRequest, "texture_file_required"
+			status, code = http.StatusBadRequest, CodeTextureFileRequired
 		}
 
-		AbortWithStandardError(c, status, code, err.Error())
+		respondError(c, status, code, err.Error())
 		return
 	}
 
@@ -147,11 +147,11 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 		status = http.StatusOK
 	}
 
-	c.JSON(status, gin.H{
-		"success": true,
-		"message": message,
-		"data":    buildUploadTextureResponse(texture),
-	})
+	if status == http.StatusCreated {
+		respondCreated(c, message, buildUploadTextureResponse(texture))
+		return
+	}
+	respondOK(c, message, buildUploadTextureResponse(texture))
 }
 
 func buildUploadTextureResponse(texture *models.TextureRecord) uploadTextureResponse {

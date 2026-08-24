@@ -12,56 +12,41 @@ import (
 	"gorm.io/gorm"
 )
 
-// StandardErrorResponse conforms to the HRPAuth error envelope.
-type StandardErrorResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Code    string `json:"code"`
-	Error   string `json:"error"`
-	Meta    struct {
-		RequestID string `json:"request_id"`
-	} `json:"meta"`
-}
-
-// AbortWithStandardError sends a standardized error response and aborts the request.
-func AbortWithStandardError(c *gin.Context, status int, code string, message string) {
-	resp := StandardErrorResponse{
-		Success: false,
-		Message: message,
-		Code:    code,
-		Error:   code, // HRPAuth uses code as the error field for compatibility
-	}
-	// RequestID can be empty if not provided by middleware
-	resp.Meta.RequestID = c.GetString("request_id")
-	
-	c.AbortWithStatusJSON(status, resp)
-}
-
 // AuthenticateUser validates the Bearer token and returns the user.
 func AuthenticateUser(c *gin.Context) (*models.User, error) {
 	tokenStr, err := extractBearerToken(c)
 	if err != nil {
-		AbortWithStandardError(c, http.StatusUnauthorized, "oauth_login_required", "Bearer token is required")
+		respondError(c, http.StatusUnauthorized, "oauth_login_required", "Bearer token is required")
 		return nil, err
 	}
 
 	var accessToken models.OAuth2AccessToken
-	if err := database.DB.Where("token = ? AND expires_at > ?", tokenStr, time.Now()).First(&accessToken).Error; err != nil {
+	if err := database.DB.Where("access_token = ? AND expires_at > ? AND revoked_at IS NULL", tokenStr, time.Now()).First(&accessToken).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			AbortWithStandardError(c, http.StatusUnauthorized, "oauth_invalid_grant", "Invalid or expired access token")
+			respondError(c, http.StatusUnauthorized, "oauth_invalid_grant", "Invalid, expired, or revoked access token")
 			return nil, err
 		}
-		AbortWithStandardError(c, http.StatusInternalServerError, "internal_error", "Failed to validate token")
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "Failed to validate token")
 		return nil, err
 	}
 
 	var user models.User
-	if err := database.DB.Where("uid = ?", accessToken.UserID).First(&user).Error; err != nil {
+	var query *gorm.DB
+	if accessToken.SubjectType == "user" && accessToken.UserID != nil {
+		query = database.DB.Where("uuid = ?", *accessToken.UserID)
+	} else if accessToken.SubjectType == "service" && accessToken.TargetUID != nil {
+		query = database.DB.Where("uid = ?", *accessToken.TargetUID)
+	} else {
+		respondError(c, http.StatusUnauthorized, "oauth_invalid_grant", "Token does not have a valid user subject")
+		return nil, errors.New("invalid token subject")
+	}
+
+	if err := query.First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			AbortWithStandardError(c, http.StatusUnauthorized, "user_not_found", "User associated with token not found")
+			respondError(c, http.StatusUnauthorized, "user_not_found", "User associated with token not found")
 			return nil, err
 		}
-		AbortWithStandardError(c, http.StatusInternalServerError, "internal_error", "Failed to fetch user")
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "Failed to fetch user")
 		return nil, err
 	}
 

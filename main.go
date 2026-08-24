@@ -23,6 +23,7 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Use(controllers.RequestIDMiddleware())
 
 	// CORS Middleware
 	r.Use(func(c *gin.Context) {

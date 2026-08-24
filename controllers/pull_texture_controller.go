@@ -37,19 +37,13 @@ func (pc *PullTextureController) Pull(c *gin.Context) {
 	// #endregion
 
 	if !hashRegex.MatchString(hash) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": errInvalidTextureHash.Error(),
-		})
+		respondError(c, http.StatusBadRequest, CodeInvalidRequest, errInvalidTextureHash.Error())
 		return
 	}
 
 	storageDir := config.AppConfig.Textures.StorageDir
 	if strings.TrimSpace(storageDir) == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "texture storage directory is not configured",
-		})
+		respondError(c, http.StatusInternalServerError, CodeStorageNotConfigured, "texture storage directory is not configured")
 		return
 	}
 
@@ -81,24 +75,15 @@ func (pc *PullTextureController) Pull(c *gin.Context) {
 				http.Post("http://127.0.0.1:7777/event", "application/json", bytes.NewBuffer(b))
 			}()
 			// #endregion
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"message": "texture file not found",
-			})
+			respondError(c, http.StatusNotFound, CodeTextureNotFound, "texture file not found")
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "failed to read texture file",
-		})
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "failed to read texture file")
 		return
 	}
 	if info.IsDir() {
-		c.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"message": "texture file not found",
-		})
+		respondError(c, http.StatusNotFound, CodeTextureNotFound, "texture file not found")
 		return
 	}
 

@@ -31,11 +31,17 @@ func (User) TableName() string {
 
 // OAuth2AccessToken 映射 HRPAuth 的 oauth2_access_tokens 表。
 type OAuth2AccessToken struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement"`
-	UserID    uint      `gorm:"column:user_id;index:idx_token_user_id"`
-	Token     string    `gorm:"type:varchar(64);column:token;uniqueIndex:uk_token"`
-	ExpiresAt time.Time `gorm:"column:expires_at"`
-	CreatedAt time.Time `gorm:"column:created_at"`
+	ID          uint       `gorm:"primaryKey;autoIncrement"`
+	AccessToken string     `gorm:"type:varchar(255);column:access_token;uniqueIndex:uk_oauth2_access_tokens_access_token"`
+	ClientID    string     `gorm:"type:varchar(100);column:client_id"`
+	UserID      *string    `gorm:"type:varchar(32);column:user_id;index:idx_oauth2_access_tokens_user_id"`
+	Scopes      string     `gorm:"type:text;column:scopes"`
+	SubjectType string     `gorm:"type:enum('user','service');column:subject_type"`
+	TargetUID   *uint      `gorm:"column:target_uid;index:idx_oauth2_access_tokens_target_uid"`
+	TargetEmail *string    `gorm:"type:varchar(255);column:target_email;index:idx_oauth2_access_tokens_target_email"`
+	ExpiresAt   time.Time  `gorm:"column:expires_at;index:idx_oauth2_access_tokens_expires_at"`
+	RevokedAt   *time.Time `gorm:"column:revoked_at"`
+	CreatedAt   time.Time  `gorm:"column:created_at"`
 }
 
 func (OAuth2AccessToken) TableName() string {
@@ -44,11 +50,15 @@ func (OAuth2AccessToken) TableName() string {
 
 // OAuth2RefreshToken 映射 HRPAuth 的 oauth2_refresh_tokens 表。
 type OAuth2RefreshToken struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement"`
-	UserID    uint      `gorm:"column:user_id;index:idx_refresh_user_id"`
-	Token     string    `gorm:"type:varchar(64);column:token;uniqueIndex:uk_refresh_token"`
-	ExpiresAt time.Time `gorm:"column:expires_at"`
-	CreatedAt time.Time `gorm:"column:created_at"`
+	ID            uint       `gorm:"primaryKey;autoIncrement"`
+	RefreshToken  string     `gorm:"type:varchar(255);column:refresh_token;uniqueIndex:uk_oauth2_refresh_tokens_refresh_token"`
+	AccessTokenID uint       `gorm:"column:access_token_id;index:idx_oauth2_refresh_tokens_access_token_id"`
+	ClientID      string     `gorm:"type:varchar(100);column:client_id"`
+	UserID        string     `gorm:"type:varchar(32);column:user_id;index:idx_oauth2_refresh_tokens_user_id"`
+	Scopes        string     `gorm:"type:text;column:scopes"`
+	ExpiresAt     time.Time  `gorm:"column:expires_at;index:idx_oauth2_refresh_tokens_expires_at"`
+	RevokedAt     *time.Time `gorm:"column:revoked_at"`
+	CreatedAt     time.Time  `gorm:"column:created_at"`
 }
 
 func (OAuth2RefreshToken) TableName() string {
