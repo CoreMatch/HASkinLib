@@ -21,13 +21,24 @@ func AuthenticateUser(c *gin.Context) (*models.User, error) {
 	}
 
 	var accessToken models.OAuth2AccessToken
-	if err := database.DB.Where("access_token = ? AND expires_at > ? AND revoked_at IS NULL", tokenStr, time.Now()).First(&accessToken).Error; err != nil {
+	// Check if the table exists to provide a better error message
+	if !database.DB.Migrator().HasTable(&models.OAuth2AccessToken{}) {
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "Authentication table 'oauth2_access_tokens' is missing. Please ensure HRPAuth migrations are applied.")
+		return nil, errors.New("missing auth table")
+	}
+
+	if err := database.DB.Where("access_token = ? AND revoked_at IS NULL", tokenStr).First(&accessToken).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			respondError(c, http.StatusUnauthorized, "oauth_invalid_grant", "Invalid, expired, or revoked access token")
 			return nil, err
 		}
-		respondError(c, http.StatusInternalServerError, CodeInternalError, "Failed to validate token")
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "Database error during token validation")
 		return nil, err
+	}
+
+	if accessToken.ExpiresAt.Before(time.Now()) {
+		respondError(c, http.StatusUnauthorized, "oauth_invalid_grant", "Access token has expired")
+		return nil, errors.New("token expired")
 	}
 
 	var user models.User
@@ -43,10 +54,10 @@ func AuthenticateUser(c *gin.Context) (*models.User, error) {
 
 	if err := query.First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			respondError(c, http.StatusUnauthorized, "user_not_found", "User associated with token not found")
+			respondError(c, http.StatusUnauthorized, "user_not_found", "User associated with token not found in HASkinLib database")
 			return nil, err
 		}
-		respondError(c, http.StatusInternalServerError, CodeInternalError, "Failed to fetch user")
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "Database error during user retrieval")
 		return nil, err
 	}
 

@@ -6,23 +6,16 @@ import (
 
 // User 映射 HRPAuth 的 users 表（只读复用，表由 HRPAuth 迁移创建）。
 type User struct {
-	UID           uint       `gorm:"primaryKey;column:uid"`
-	UUID          string     `gorm:"type:varchar(32);column:uuid;index:idx_uuid"`
-	Email         string     `gorm:"type:varchar(255);column:email"`
-	Avatar        string     `gorm:"type:varchar(255);column:avatar"`
-	Password      string     `gorm:"type:varchar(255);not null;column:password"`
-	IP            string     `gorm:"type:varchar(255);column:ip"`
-	Permission    int        `gorm:"default:0;column:permission"`
-	LastSignAt    *time.Time `gorm:"column:last_sign_at"`
-	RegisterAt    *time.Time `gorm:"column:register_at"`
-	Verified      bool       `gorm:"type:tinyint(1);default:0;column:verified"`
-	RememberToken string     `gorm:"type:varchar(100);column:remember_token"`
-	Username      string     `gorm:"type:varchar(255);column:username"`
-	RegIP         string     `gorm:"type:varchar(40);column:regip"`
-	TOTP          string     `gorm:"type:varchar(32);column:totp"`
-	CBH           bool       `gorm:"type:tinyint(1);not null;default:1;column:cbh"`
-	MBE           bool       `gorm:"type:tinyint(1);not null;default:0;column:mbe"`
-	MojangUUID    *string    `gorm:"type:varchar(32);column:mojang_uuid;uniqueIndex:uk_users_mojang_uuid"`
+	UID           uint    `gorm:"primaryKey;column:uid"`
+	UUID          string  `gorm:"type:varchar(32);uniqueIndex:idx_uuid;column:uuid"`
+	Email         *string `gorm:"type:varchar(255);column:email"`
+	Password      string  `gorm:"type:varchar(255);column:password"`
+	RememberToken *string `gorm:"type:varchar(100);column:remember_token"`
+	Verified      bool    `gorm:"type:tinyint(1);not null;default:0;column:verified"`
+	TOTP          *string `gorm:"type:varchar(32);column:totp"`
+	TwoFA         bool    `gorm:"type:tinyint(1);not null;default:0;column:2FA"`
+	MBE           bool    `gorm:"type:tinyint(1);not null;default:0;column:mbe"`
+	MojangUUID    *string `gorm:"type:varchar(32);column:mojang_uuid;uniqueIndex:uk_users_mojang_uuid"`
 }
 
 func (User) TableName() string {
