@@ -54,6 +54,7 @@ func main() {
 	listPreviewCtrl := controllers.NewListPreviewController()
 	previewFileCtrl := controllers.NewPreviewFileController()
 	pullTextureCtrl := controllers.NewPullTextureController()
+	deleteTextureCtrl := controllers.NewDeleteTextureController()
 	profileCtrl := controllers.NewProfileController()
 
 	r.GET("/example", exampleCtrl.Hello)
@@ -61,6 +62,7 @@ func main() {
 	r.GET("/texture/listpreview", listPreviewCtrl.List)
 	r.GET("/texture/preview/:preview_file", previewFileCtrl.Get)
 	r.GET("/texture/pull/:hash", pullTextureCtrl.Pull)
+	r.POST("/texture/delete", deleteTextureCtrl.DeleteTexture)
 	r.GET("/profile/textures", profileCtrl.GetMyTextures)
 
 	log.Printf("server listening on %s", config.AppConfig.Server.Port)

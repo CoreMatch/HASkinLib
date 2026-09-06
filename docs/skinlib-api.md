@@ -6,6 +6,7 @@
 - `GET /texture/listpreview`：获取材质预览列表
 - `GET /texture/preview/:preview_file`：直接访问预览图文件
 - `GET /texture/pull/:hash`：根据哈希值直接拉取材质原文件
+- `POST /texture/delete`：删除当前用户的指定材质（数据库记录 + 磁盘文件）
 - `GET /profile/textures`：获取当前登录用户的材质列表（**[状态：暂时搁置]**）
 
 说明：
@@ -496,7 +497,86 @@ curl "http://127.0.0.1:2701/texture/pull/e3b0c44298fc1c149afbf4c8996fb92427ae41e
 | `401` | `oauth_login_required` | `Bearer token is required` |
 | `401` | `oauth_invalid_grant` | `Invalid or expired access token` |
 
-## 6. 相关配置
+## 6. 删除材质
+
+**端点**
+
+`POST /texture/delete`
+
+**鉴权**
+
+需要 `OAuth2 Bearer Token`
+
+支持以下传递方式：
+
+- `Authorization: Bearer <access_token>`
+
+**权限**
+
+- 仅允许删除当前 Token 所属用户的材质
+- 不允许通过 `uid` 字段指定删除其他用户的材质
+
+**请求格式**
+
+`multipart/form-data`
+
+**请求参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|---|---|---:|---|
+| `type` | string | 是 | 材质类型：`skin` 或 `cape` |
+| `hash` | string | 是 | 材质文件的 SHA-256 哈希值，必须是 64 位十六进制字符串 |
+
+**副作用**
+
+- 数据库记录：从 `texture_list_skin` 或 `texture_list_cape` 表中删除 `(uid, hash)` 匹配的行
+- 磁盘文件：强制删除 `textures.storage_dir` 下以 `hash` 命名的原始 PNG 文件，以及 `textures.preview_storage_dir` 下的 WebP 预览图
+- 注意：即使其他用户仍在引用相同 hash，本接口也会强制清理磁盘文件。其他用户的素材将无法 `pull` 或 `preview`，但其数据库记录不会被删除
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "message": "texture deleted successfully",
+  "data": {
+    "id": 12,
+    "hash": "8c9b0f...",
+    "type": "skin",
+    "uid": 10001,
+    "model": "slim",
+    "name": "Blue Girl",
+    "file_name": "my-skin.png",
+    "preview_file": "8c9b0f..._skin.webp"
+  }
+}
+```
+
+`cape` 成功响应中不会包含 `model`。
+
+**失败响应**
+
+| HTTP | code | message |
+|---|---|---|
+| `400` | `invalid_request` | `type is required` |
+| `400` | `invalid_request` | `hash is required` |
+| `400` | `invalid_texture_type` | `texture type must be skin or cape` |
+| `400` | `invalid_request` | `texture hash must be a valid 64-character hex string` |
+| `401` | `oauth_login_required` | `Bearer token is required` |
+| `401` | `oauth_invalid_grant` | `Invalid or expired access token` |
+| `404` | `texture_not_found` | `texture not found` |
+| `500` | `internal_error` | 其他服务端错误 |
+
+**curl 示例**
+
+```bash
+curl -X POST "http://127.0.0.1:2701/texture/delete" \
+  -H "Authorization: Bearer <access_token>" \
+  -F "type=skin" \
+  -F "hash=8c9b0f..."
+```
+
+## 7. 相关配置
 
 配置文件中的 `textures` 段与这两组接口直接相关：
 
@@ -523,11 +603,9 @@ textures:
 当前版本还**没有**这些接口：
 
 - 材质详情接口
-- 材质删除接口
 - 材质编辑接口
 
 如果后续开放，建议延续当前命名风格，例如：
 
 - `GET /texture/detail/:id`
-- `POST /texture/delete`
 - `POST /texture/update`

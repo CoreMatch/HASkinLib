@@ -31,6 +31,8 @@ var (
 	ErrTextureNameRequired = errors.New("texture name is required")
 	ErrInvalidSkinSize     = errors.New("skin texture must be 64x32 or 64x64")
 	ErrInvalidCapeSize     = errors.New("cape texture must be 64x32 or 22x17")
+	ErrInvalidTextureHash  = errors.New("texture hash must be a valid 64-character hex string")
+	ErrTextureNotFound     = errors.New("texture not found")
 )
 
 const maxTextureNameLength = 20
