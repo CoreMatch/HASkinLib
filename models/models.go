@@ -10,7 +10,6 @@ type User struct {
 	UUID          string  `gorm:"type:varchar(32);uniqueIndex:idx_uuid;column:uuid"`
 	Email         *string `gorm:"type:varchar(255);column:email"`
 	Password      string  `gorm:"type:varchar(255);column:password"`
-	RememberToken *string `gorm:"type:varchar(100);column:remember_token"`
 	Verified      bool    `gorm:"type:tinyint(1);not null;default:0;column:verified"`
 	TOTP          *string `gorm:"type:varchar(32);column:totp"`
 	TwoFA         bool    `gorm:"type:tinyint(1);not null;default:0;column:2FA"`

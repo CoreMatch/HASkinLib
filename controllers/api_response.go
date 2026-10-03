@@ -15,8 +15,6 @@ const requestIDContextKey = "request_id"
 
 const (
 	CodeInvalidRequest         = "invalid_request"
-	CodeRememberTokenRequired  = "remember_token_required"
-	CodeInvalidRememberToken   = "invalid_remember_token"
 	CodeUploadRequestTooLarge  = "upload_request_too_large"
 	CodeUploadRateLimited      = "upload_rate_limited"
 	CodeTextureTypeInvalid     = "invalid_texture_type"
