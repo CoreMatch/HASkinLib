@@ -90,6 +90,11 @@ func Load() {
 		if err := yaml.Unmarshal(data, &yamlConfig); err != nil {
 			log.Fatalf("Failed to parse config file: %v", err)
 		}
+		if version := getString(yamlConfig, "version"); version == "" {
+			log.Fatalf("Config file is missing version field")
+		} else if version != ConfigVersion {
+			log.Printf("Warning: config file version %s does not match expected version %s", version, ConfigVersion)
+		}
 		if server, ok := yamlConfig["server"].(map[string]any); ok {
 			if p := getString(server, "port"); p != "" {
 				port = p

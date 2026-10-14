@@ -112,21 +112,40 @@ func (sc *StartupController) checkAndMigrateConfig(path string) error {
 		return sc.ensureTextureStorageDir(currentConfig)
 	}
 
-	log.Printf("Config file version mismatch: current=%q, expected=%q, migrating...", currentVersion, config.ConfigVersion)
+	if config.VersionMajor(currentVersion) > config.VersionMajor(config.ConfigVersion) {
+		log.Printf("Warning: config file version %q is newer than supported version %q, continuing without migration", currentVersion, config.ConfigVersion)
+		return sc.ensureTextureStorageDir(currentConfig)
+	}
 
-	defaultConfig := sc.buildDefaultConfig()
-	mergedConfig := mergeConfigMaps(defaultConfig, currentConfig)
-	if ensureDirErr := sc.ensureTextureStorageDir(mergedConfig); ensureDirErr != nil {
+	log.Printf("Config file version %q is older than %q, migrating...", currentVersion, config.ConfigVersion)
+
+	if err := config.BackupConfigFile(path, currentVersion); err != nil {
+		return fmt.Errorf("failed to backup config file: %v", err)
+	}
+
+	migratedConfig, changed, err := config.MigrateConfig(currentConfig)
+	if err != nil {
+		return fmt.Errorf("failed to migrate config: %v", err)
+	}
+	if !changed {
+		return sc.ensureTextureStorageDir(currentConfig)
+	}
+
+	if ensureDirErr := sc.ensureTextureStorageDir(migratedConfig); ensureDirErr != nil {
 		return ensureDirErr
 	}
 
-	data, err = yaml.Marshal(mergedConfig)
+	data, err = yaml.Marshal(migratedConfig)
 	if err != nil {
 		return fmt.Errorf("failed to marshal migrated config: %v", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	tmpPath := path + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write migrated config file: %v", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		return fmt.Errorf("failed to replace migrated config file: %v", err)
 	}
 
 	log.Printf("Config file migrated to version %s at %s", config.ConfigVersion, path)
@@ -146,40 +165,6 @@ func (sc *StartupController) ensureTextureStorageDir(cfg map[string]any) error {
 		}
 	}
 	return nil
-}
-
-func mergeConfigMaps(defaultCfg, currentCfg map[string]any) map[string]any {
-	result := make(map[string]any, len(defaultCfg))
-	for key, defaultVal := range defaultCfg {
-		currentVal, exists := currentCfg[key]
-		if !exists {
-			result[key] = deepCopyValue(defaultVal)
-			continue
-		}
-
-		defaultMap, defaultIsMap := defaultVal.(map[string]any)
-		currentMap, currentIsMap := currentVal.(map[string]any)
-		if defaultIsMap && currentIsMap {
-			result[key] = mergeConfigMaps(defaultMap, currentMap)
-			continue
-		}
-
-		result[key] = currentVal
-	}
-	return result
-}
-
-func deepCopyValue(v any) any {
-	data, err := yaml.Marshal(v)
-	if err != nil {
-		return v
-	}
-
-	var copy any
-	if err := yaml.Unmarshal(data, &copy); err != nil {
-		return v
-	}
-	return copy
 }
 
 // EnsureMigrations 使用 golang-migrate 执行所有待处理迁移。
