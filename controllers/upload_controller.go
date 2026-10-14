@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -70,18 +69,6 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 		return
 	}
 
-	uidValue := strings.TrimSpace(c.PostForm("uid"))
-	uid64, err := strconv.ParseUint(uidValue, 10, 64)
-	if err != nil || uid64 == 0 {
-		respondError(c, http.StatusBadRequest, CodeInvalidRequest, "uid must be a positive integer")
-		return
-	}
-
-	if uint(uid64) != user.UID {
-		respondError(c, http.StatusForbidden, "oauth_access_denied", "Token does not match the requested uid")
-		return
-	}
-
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		fileHeader, err = c.FormFile("texture")
@@ -110,7 +97,7 @@ func (uc *UploadController) UploadTexture(c *gin.Context) {
 
 	texture, created, err := uc.uploadService.UploadTexture(services.UploadTextureInput{
 		Type:             c.PostForm("type"),
-		UID:              uint(uid64),
+		UID:              user.UID,
 		Model:            c.PostForm("model"),
 		Name:             c.PostForm("name"),
 		Description:      c.PostForm("description"),

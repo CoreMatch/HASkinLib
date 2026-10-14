@@ -51,6 +51,11 @@ func (sc *StartupController) buildDefaultConfig() map[string]any {
 			"password": "hrpa",
 			"charset":  "utf8mb4",
 		},
+		"core_api": map[string]any{
+			"base_url":      "http://127.0.0.1:2778",
+			"client_id":     "",
+			"client_secret": "",
+		},
 		"textures": map[string]any{
 			"storage_dir":               "./data/textures",
 			"preview_storage_dir":       "./data/previews",

@@ -38,7 +38,6 @@
 
 | 参数 | 类型 | 必填 | 说明 |
 |---|---|---:|---|
-| `uid` | integer | 是 | 上传目标用户 ID |
 | `type` | string | 是 | 材质类型：`skin` 或 `cape` |
 | `model` | string | 否 | 仅 `skin` 使用：`default` 或 `slim`；缺省为 `default` |
 | `name` | string | 是 | 材质名称 |
@@ -143,7 +142,6 @@
 
 | HTTP | code | message |
 |---|---|---|
-| `400` | `invalid_request` | `uid must be a positive integer` |
 | `400` | `texture_file_required` | `file is required` |
 | `400` | `invalid_texture_type` | `texture type must be skin or cape` |
 | `400` | `invalid_texture_model` | `texture model must be default or slim` |
@@ -153,7 +151,6 @@
 | `400` | `texture_name_required` | `texture name is required` |
 | `401` | `oauth_login_required` | `Bearer token is required` |
 | `401` | `oauth_invalid_grant` | `Invalid or expired access token` |
-| `403` | `oauth_access_denied` | `Token does not match the requested uid` |
 | `413` | `upload_request_too_large` | `upload request is too large` |
 | `413` | `upload_request_too_large` | `texture file must be <n> bytes or smaller` |
 | `429` | `upload_rate_limited` | `upload rate limit exceeded, please try again later` |
@@ -164,7 +161,6 @@
 ```bash
 curl -X POST "http://127.0.0.1:2701/texture/upload" \
   -H "Authorization: Bearer <access_token>" \
-  -F "uid=10001" \
   -F "type=skin" \
   -F "model=slim" \
   -F "name=Blue Girl" \

@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	CoreAPI  CoreAPIConfig
 	Textures TextureConfig
 }
 
@@ -29,6 +30,12 @@ type DatabaseConfig struct {
 	Charset  string
 }
 
+type CoreAPIConfig struct {
+	BaseURL      string
+	ClientID     string
+	ClientSecret string
+}
+
 // TextureConfig 保存材质文件存放配置。
 type TextureConfig struct {
 	StorageDir             string
@@ -41,7 +48,7 @@ type TextureConfig struct {
 
 const ConfigFileName = "config.yaml"
 const ConfigFileDir = "./"
-const ConfigVersion = "4"
+const ConfigVersion = "5"
 
 var AppConfig *Config
 
@@ -58,6 +65,11 @@ func Load() {
 		User:     "hrpa",
 		Password: "hrpa",
 		Charset:  "utf8mb4",
+	}
+	coreAPI := CoreAPIConfig{
+		BaseURL:      "http://127.0.0.1:2778",
+		ClientID:     "",
+		ClientSecret: "",
 	}
 	textures := TextureConfig{
 		StorageDir:             "./data/textures",
@@ -101,6 +113,17 @@ func Load() {
 				database.Charset = v
 			}
 		}
+		if core, ok := yamlConfig["core_api"].(map[string]any); ok {
+			if v := getString(core, "base_url"); v != "" {
+				coreAPI.BaseURL = v
+			}
+			if v := getString(core, "client_id"); v != "" {
+				coreAPI.ClientID = v
+			}
+			if v := getString(core, "client_secret"); v != "" {
+				coreAPI.ClientSecret = v
+			}
+		}
 		if textureCfg, ok := yamlConfig["textures"].(map[string]any); ok {
 			if v := getString(textureCfg, "storage_dir"); v != "" {
 				textures.StorageDir = v
@@ -129,6 +152,7 @@ func Load() {
 			CORS: cors,
 		},
 		Database: database,
+		CoreAPI:  coreAPI,
 		Textures: textures,
 	}
 
