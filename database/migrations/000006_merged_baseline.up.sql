@@ -17,8 +17,7 @@ CREATE TABLE IF NOT EXISTS `texture_list_skin` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_texture_list_skin_uid_hash` (`uid`, `hash`),
-  KEY `idx_texture_list_skin_uid` (`uid`),
-  CONSTRAINT `texture_list_skin_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `users` (`uid`) ON DELETE CASCADE
+  KEY `idx_texture_list_skin_uid` (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `texture_list_cape` (
@@ -36,8 +35,7 @@ CREATE TABLE IF NOT EXISTS `texture_list_cape` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_texture_list_cape_uid_hash` (`uid`, `hash`),
-  KEY `idx_texture_list_cape_uid` (`uid`),
-  CONSTRAINT `texture_list_cape_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `users` (`uid`) ON DELETE CASCADE
+  KEY `idx_texture_list_cape_uid` (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 处理旧表迁移（如果存在旧的 texture_list 表）

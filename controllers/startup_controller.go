@@ -4,24 +4,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
-	"strconv"
-	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/goccy/go-yaml"
+	"github.com/golang-migrate/migrate/v4"
+	mysqldriver "github.com/golang-migrate/migrate/v4/database/mysql"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/lnb/HRPAuth-Backend-Go/config"
 	"github.com/lnb/HRPAuth-Backend-Go/database/migrations"
 )
-
-// ServiceName 本项目在共享 schema_migrations 表中的服务标识。
-// 若 schema_migrations 不存在，本项目会按当前所需最小结构创建它；
-// 之后只认 service='HASL' 这一行：不存在则创建，迁移后更新其 version。
-const ServiceName = "HASL"
 
 type StartupController struct{}
 
@@ -179,13 +173,9 @@ func deepCopyValue(v any) any {
 	return copy
 }
 
-// EnsureMigrations 执行自有数据库迁移（轻量执行器，替代 golang-migrate）。
-// 步骤：
-//  1. 确保 schema_migrations 表存在；
-//  2. 确保 schema_migrations.dirty 列存在且默认值为 0（仅兼容，不参与逻辑）；
-//  3. 检查 schema_migrations 中 service='HASL' 的行是否存在，不存在则创建（version=0）；
-//  4. 按文件名顺序执行 embed 的自有迁移（*.up.sql，均为幂等 DDL，不动 users 表）；
-//  5. 将 HASL 行的 version 更新为最新迁移版本。
+// EnsureMigrations 使用 golang-migrate 执行所有待处理迁移。
+// 方案 1 明确要求独立数据库，因此这里不再兼容共享时期带 service 列的
+// schema_migrations 表；一旦检测到旧结构，会直接报错并提示切换到独立库。
 func (sc *StartupController) EnsureMigrations() error {
 	cfg := config.AppConfig.Database
 	dsn := fmt.Sprintf(
@@ -199,33 +189,57 @@ func (sc *StartupController) EnsureMigrations() error {
 	}
 	defer db.Close()
 
-	if err := sc.ensureMigrationsTable(db, cfg.DBName); err != nil {
+	if err := sc.ensureStandardMigrationsTable(db, cfg.DBName); err != nil {
 		return err
 	}
 
-	if err := sc.ensureServicePK(db, cfg.DBName); err != nil {
-		return err
-	}
-
-	if err := sc.ensureDirtyColumnDefault(db, cfg.DBName); err != nil {
-		return err
-	}
-
-	currentVersion, err := sc.ensureServiceRow(db)
+	driver, err := mysqldriver.WithInstance(db, &mysqldriver.Config{
+		MigrationsTable: "schema_migrations",
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create migration driver: %v", err)
 	}
 
-	if err := sc.runEmbeddedMigrations(db, currentVersion); err != nil {
-		return err
+	src, err := iofs.New(migrations.FS, ".")
+	if err != nil {
+		return fmt.Errorf("failed to create migration source from embedded files: %v", err)
 	}
 
-	return sc.updateServiceVersion(db)
+	m, err := migrate.NewWithInstance("iofs", src, cfg.DBName, driver)
+	if err != nil {
+		return fmt.Errorf("failed to create migrator: %v", err)
+	}
+	defer func() {
+		_, closeErr := m.Close()
+		if closeErr != nil {
+			log.Printf("warning: migration close error: %v", closeErr)
+		}
+	}()
+
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		var dirtyErr migrate.ErrDirty
+		if errors.As(err, &dirtyErr) {
+			return fmt.Errorf("failed to run migrations: database is dirty at version %d; fix the migration state and force version before restarting", dirtyErr.Version)
+		}
+		return fmt.Errorf("failed to run migrations: %v", err)
+	}
+
+	version, dirty, err := m.Version()
+	if err != nil {
+		if errors.Is(err, migrate.ErrNilVersion) {
+			log.Printf("Database migration completed with no applied versions")
+			return nil
+		}
+		return fmt.Errorf("failed to read database migration version: %v", err)
+	}
+
+	log.Printf("Database migration completed at version %d (dirty: %t)", version, dirty)
+	return nil
 }
 
-// ensureMigrationsTable 确保共享 schema_migrations 表存在。
-// 表结构只包含当前项目所需的最小字段：service、version、dirty。
-func (sc *StartupController) ensureMigrationsTable(db *sql.DB, dbName string) error {
+// ensureStandardMigrationsTable 确保独立数据库使用标准 schema_migrations 表。
+// 如果检测到旧共享库遗留的 service 列，直接报错，避免在错误的数据库上继续运行。
+func (sc *StartupController) ensureStandardMigrationsTable(db *sql.DB, dbName string) error {
 	var tableCount int
 	err := db.QueryRow(`
 		SELECT COUNT(*)
@@ -237,215 +251,35 @@ func (sc *StartupController) ensureMigrationsTable(db *sql.DB, dbName string) er
 		return fmt.Errorf("failed to inspect schema_migrations table: %v", err)
 	}
 
-	if tableCount > 0 {
+	if tableCount == 0 {
+		if _, err := db.Exec(`
+			CREATE TABLE IF NOT EXISTS schema_migrations (
+				version BIGINT NOT NULL,
+				dirty BOOLEAN NOT NULL,
+				PRIMARY KEY (version)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+		`); err != nil {
+			return fmt.Errorf("failed to create schema_migrations table: %v", err)
+		}
+		log.Printf("Created standard schema_migrations table")
 		return nil
 	}
 
-	if _, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS schema_migrations (
-			service VARCHAR(64) NOT NULL,
-			version INT NOT NULL DEFAULT 0,
-			dirty TINYINT(1) NOT NULL DEFAULT 0,
-			PRIMARY KEY (service)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-	`); err != nil {
-		return fmt.Errorf("failed to create schema_migrations table: %v", err)
-	}
-
-	log.Printf("Created schema_migrations table")
-	return nil
-}
-
-// ensureServicePK 确保 schema_migrations 表以 service 为主键。
-// 如果发现 version 是唯一主键（golang-migrate 默认行为），则将其修改为以 service 为主键。
-func (sc *StartupController) ensureServicePK(db *sql.DB, dbName string) error {
-	var pkColumns sql.NullString
-	err := db.QueryRow(`
-		SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY ORDINAL_POSITION)
-		FROM information_schema.KEY_COLUMN_USAGE
-		WHERE TABLE_SCHEMA = ?
-		  AND TABLE_NAME = 'schema_migrations'
-		  AND CONSTRAINT_NAME = 'PRIMARY'
-	`, dbName).Scan(&pkColumns)
-	if err != nil {
-		return fmt.Errorf("failed to inspect schema_migrations primary key: %v", err)
-	}
-
-	// 如果主键已经是 service，则无需修改
-	if pkColumns.Valid && pkColumns.String == "service" {
-		return nil
-	}
-
-	log.Printf("Fixing schema_migrations primary key: current=%v, expected=service", pkColumns.String)
-
-	// 1. 确保 service 列存在
-	var columnCount int
+	var serviceColumnCount int
 	err = db.QueryRow(`
-		SELECT COUNT(*) FROM information_schema.COLUMNS 
-		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'schema_migrations' AND COLUMN_NAME = 'service'
-	`, dbName).Scan(&columnCount)
-	if err != nil {
-		return err
-	}
-	if columnCount == 0 {
-		if _, err := db.Exec("ALTER TABLE schema_migrations ADD COLUMN service VARCHAR(64) NOT NULL DEFAULT 'HA'"); err != nil {
-			return fmt.Errorf("failed to add service column: %v", err)
-		}
-	}
-
-	// 2. 清理重复数据：每个 service 只保留 version 最大的那一行
-	// 注意：MySQL 8.0 以下不支持在 DELETE 中直接使用子查询查同一个表，所以用临时表或 JOIN 方式
-	if _, err := db.Exec(`
-		DELETE m1 FROM schema_migrations m1
-		INNER JOIN schema_migrations m2 
-		WHERE m1.service = m2.service AND m1.version < m2.version
-	`); err != nil {
-		return fmt.Errorf("failed to deduplicate schema_migrations: %v", err)
-	}
-
-	// 3. 重新定义主键
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	if pkColumns.Valid {
-		if _, err := tx.Exec("ALTER TABLE schema_migrations DROP PRIMARY KEY"); err != nil {
-			return fmt.Errorf("failed to drop old primary key: %v", err)
-		}
-	}
-	if _, err := tx.Exec("ALTER TABLE schema_migrations ADD PRIMARY KEY (service)"); err != nil {
-		return fmt.Errorf("failed to add new primary key: %v", err)
-	}
-
-	return tx.Commit()
-}
-
-// ensureDirtyColumnDefault 确保 schema_migrations 的 dirty 列存在且默认值为 0。
-// 该列仅用于兼容外部迁移表结构，本项目不读取也不依赖它。
-func (sc *StartupController) ensureDirtyColumnDefault(db *sql.DB, dbName string) error {
-	var columnCount int
-	err := db.QueryRow(`
 		SELECT COUNT(*)
 		FROM information_schema.COLUMNS
 		WHERE TABLE_SCHEMA = ?
 		  AND TABLE_NAME = 'schema_migrations'
-		  AND COLUMN_NAME = 'dirty'
-	`, dbName).Scan(&columnCount)
+		  AND COLUMN_NAME = 'service'
+	`, dbName).Scan(&serviceColumnCount)
 	if err != nil {
-		return fmt.Errorf("failed to inspect schema_migrations.dirty column: %v", err)
+		return fmt.Errorf("failed to inspect schema_migrations columns: %v", err)
 	}
 
-	if columnCount == 0 {
-		if _, execErr := db.Exec("ALTER TABLE schema_migrations ADD COLUMN dirty TINYINT(1) NOT NULL DEFAULT 0"); execErr != nil {
-			return fmt.Errorf("failed to add schema_migrations.dirty column: %v", execErr)
-		}
-		log.Printf("Added schema_migrations.dirty column with default 0")
-		return nil
-	}
-
-	var columnDefault sql.NullString
-	err = db.QueryRow(`
-		SELECT COLUMN_DEFAULT
-		FROM information_schema.COLUMNS
-		WHERE TABLE_SCHEMA = ?
-		  AND TABLE_NAME = 'schema_migrations'
-		  AND COLUMN_NAME = 'dirty'
-	`, dbName).Scan(&columnDefault)
-	if err != nil {
-		return fmt.Errorf("failed to inspect schema_migrations.dirty default: %v", err)
-	}
-
-	if !columnDefault.Valid || columnDefault.String != "0" {
-		if _, err := db.Exec("ALTER TABLE schema_migrations MODIFY COLUMN dirty TINYINT(1) NOT NULL DEFAULT 0"); err != nil {
-			return fmt.Errorf("failed to set default value for schema_migrations.dirty: %v", err)
-		}
-		log.Printf("Updated schema_migrations.dirty default to 0")
+	if serviceColumnCount > 0 {
+		return fmt.Errorf("legacy shared schema_migrations table detected in database %q; option 1 requires a dedicated HASkinLib database or a fresh standard schema_migrations table without the service column", dbName)
 	}
 
 	return nil
-}
-
-// ensureServiceRow 检查 service='HASL' 的行是否存在；不存在则创建（version=0）。
-// 只读写本服务自己的行，不触碰其它服务行。返回当前服务的 version。
-func (sc *StartupController) ensureServiceRow(db *sql.DB) (int, error) {
-	var version int
-	err := db.QueryRow("SELECT version FROM schema_migrations WHERE service = ?", ServiceName).Scan(&version)
-	if err == nil {
-		log.Printf("schema_migrations row for service %s exists (version %d)", ServiceName, version)
-		return version, nil
-	}
-	if !errors.Is(err, sql.ErrNoRows) {
-		return 0, fmt.Errorf("failed to query schema_migrations for service %s: %v", ServiceName, err)
-	}
-
-	if _, err := db.Exec("INSERT INTO schema_migrations (service, version) VALUES (?, 0)", ServiceName); err != nil {
-		return 0, fmt.Errorf("failed to create schema_migrations row for service %s: %v", ServiceName, err)
-	}
-	log.Printf("Created schema_migrations row for service %s", ServiceName)
-	return 0, nil
-}
-
-// runEmbeddedMigrations 按文件名顺序执行 embed 的自有迁移（仅 *.up.sql）。
-// 只执行版本号大于 currentVersion 的迁移。
-func (sc *StartupController) runEmbeddedMigrations(db *sql.DB, currentVersion int) error {
-	entries, err := fs.Glob(migrations.FS, "*.up.sql")
-	if err != nil {
-		return fmt.Errorf("failed to list migration files: %v", err)
-	}
-	sort.Strings(entries)
-
-	for _, name := range entries {
-		v := migrationVersion(name)
-		if v <= currentVersion {
-			continue
-		}
-
-		data, err := migrations.FS.ReadFile(name)
-		if err != nil {
-			return fmt.Errorf("failed to read migration %s: %v", name, err)
-		}
-		if _, err := db.Exec(string(data)); err != nil {
-			return fmt.Errorf("failed to run migration %s: %v", name, err)
-		}
-		log.Printf("Applied migration %s (v%d)", name, v)
-	}
-	return nil
-}
-
-// updateServiceVersion 将 HASL 行的 version 更新为最新迁移版本。
-func (sc *StartupController) updateServiceVersion(db *sql.DB) error {
-	latest := latestMigrationVersion()
-	if _, err := db.Exec("UPDATE schema_migrations SET version = ? WHERE service = ?", latest, ServiceName); err != nil {
-		return fmt.Errorf("failed to update schema_migrations version for service %s: %v", ServiceName, err)
-	}
-	log.Printf("Updated schema_migrations version for service %s to %d", ServiceName, latest)
-	return nil
-}
-
-// latestMigrationVersion 从 embed 的迁移文件名（如 000002_texture_list.up.sql）解析出最大版本号。
-func latestMigrationVersion() int {
-	entries, _ := fs.Glob(migrations.FS, "*.up.sql")
-	max := 0
-	for _, name := range entries {
-		v := migrationVersion(name)
-		if v > max {
-			max = v
-		}
-	}
-	return max
-}
-
-func migrationVersion(name string) int {
-	base := strings.TrimSuffix(name, ".up.sql")
-	idx := strings.Index(base, "_")
-	if idx <= 0 {
-		return 0
-	}
-	v, err := strconv.Atoi(base[:idx])
-	if err != nil {
-		return 0
-	}
-	return v
 }
