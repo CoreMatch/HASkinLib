@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"testing/fstest"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/goccy/go-yaml"
@@ -45,11 +48,12 @@ func (sc *StartupController) buildDefaultConfig() map[string]any {
 			"cors": "*",
 		},
 		"database": map[string]any{
-			"host":     "127.0.0.1",
-			"db_name":  "hrpa",
-			"user":     "hrpa",
-			"password": "hrpa",
-			"charset":  "utf8mb4",
+			"host":         "127.0.0.1",
+			"db_name":      "hrpa",
+			"user":         "hrpa",
+			"password":     "hrpa",
+			"charset":      "utf8mb4",
+			"table_prefix": "hasl_",
 		},
 		"core_api": map[string]any{
 			"base_url":      "http://127.0.0.1:2778",
@@ -205,7 +209,12 @@ func (sc *StartupController) EnsureMigrations() error {
 		return fmt.Errorf("failed to create migration driver: %v", err)
 	}
 
-	src, err := iofs.New(migrations.FS, ".")
+	migrationFS, err := buildMigrationFS(config.AppConfig.Database.TablePrefix)
+	if err != nil {
+		return fmt.Errorf("failed to prepare prefixed migration source: %v", err)
+	}
+
+	src, err := iofs.New(migrationFS, ".")
 	if err != nil {
 		return fmt.Errorf("failed to create migration source from embedded files: %v", err)
 	}
@@ -240,6 +249,33 @@ func (sc *StartupController) EnsureMigrations() error {
 
 	log.Printf("Database migration completed at version %d (dirty: %t)", version, dirty)
 	return nil
+}
+
+func buildMigrationFS(tablePrefix string) (fs.FS, error) {
+	entries, err := fs.Glob(migrations.FS, "*.sql")
+	if err != nil {
+		return nil, err
+	}
+
+	migrationFS := fstest.MapFS{}
+	replacer := strings.NewReplacer(
+		"`texture_list_skin`", "`"+tablePrefix+"texture_list_skin`",
+		"`texture_list_cape`", "`"+tablePrefix+"texture_list_cape`",
+	)
+
+	for _, name := range entries {
+		data, err := fs.ReadFile(migrations.FS, name)
+		if err != nil {
+			return nil, err
+		}
+
+		migrationFS[name] = &fstest.MapFile{
+			Data: []byte(replacer.Replace(string(data))),
+			Mode: 0644,
+		}
+	}
+
+	return migrationFS, nil
 }
 
 // ensureStandardMigrationsTable 确保独立数据库使用标准 schema_migrations 表。

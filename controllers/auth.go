@@ -30,7 +30,18 @@ func AuthenticateUser(c *gin.Context) (*models.AuthenticatedUser, error) {
 		return nil, err
 	}
 
-	return user, nil
+	if user.UUID == "" {
+		respondError(c, http.StatusUnauthorized, "oauth_invalid_grant", "User identity is incomplete")
+		return nil, errors.New("missing user uuid")
+	}
+
+	freshUser, err := coreClient.GetUserInfo(user.UUID)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, CodeInternalError, "Failed to refresh user information from core service")
+		return nil, err
+	}
+
+	return freshUser, nil
 }
 
 func extractBearerToken(c *gin.Context) (string, error) {

@@ -1,19 +1,25 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/lnb/HRPAuth-Backend-Go/config"
+)
 
 // AuthenticatedUser 是 HASkinLib 业务层消费的最小用户映射。
 type AuthenticatedUser struct {
-	UID   uint
-	UUID  string
-	Email string
+	UID      uint
+	UUID     string
+	Email    string
+	Username string
 }
 
 // CoreUserIdentity 对齐主项目 /internal/verify-token 返回的数据形状。
 type CoreUserIdentity struct {
-	UID   uint   `json:"uid"`
-	UUID  string `json:"uuid"`
-	Email string `json:"email"`
+	UID      uint   `json:"uid"`
+	UUID     string `json:"uuid"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 // TextureRecord 是接口层使用的统一纹理记录结构。
@@ -55,7 +61,7 @@ type TextureListSkin struct {
 }
 
 func (TextureListSkin) TableName() string {
-	return "texture_list_skin"
+	return prefixedTableName("texture_list_skin")
 }
 
 type TextureListCape struct {
@@ -74,5 +80,12 @@ type TextureListCape struct {
 }
 
 func (TextureListCape) TableName() string {
-	return "texture_list_cape"
+	return prefixedTableName("texture_list_cape")
+}
+
+func prefixedTableName(base string) string {
+	if config.AppConfig == nil {
+		return "hasl_" + base
+	}
+	return config.AppConfig.Database.TablePrefix + base
 }

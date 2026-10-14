@@ -59,8 +59,8 @@
 - `skin` 会生成 2D 全身预览图
 - `cape` 会生成平铺正面预览图
 - 元数据会写入：
-  - `texture_list_skin`
-  - `texture_list_cape`
+  - `${database.table_prefix}texture_list_skin`
+  - `${database.table_prefix}texture_list_cape`
 
 **成功响应**
 
@@ -525,7 +525,7 @@ curl "http://127.0.0.1:2701/texture/pull/e3b0c44298fc1c149afbf4c8996fb92427ae41e
 
 **副作用**
 
-- 数据库记录：从 `texture_list_skin` 或 `texture_list_cape` 表中删除 `(uid, hash)` 匹配的行
+- 数据库记录：从 `${database.table_prefix}texture_list_skin` 或 `${database.table_prefix}texture_list_cape` 表中删除 `(uid, hash)` 匹配的行
 - 磁盘文件：强制删除 `textures.storage_dir` 下以 `hash` 命名的原始 PNG 文件，以及 `textures.preview_storage_dir` 下的 WebP 预览图
 - 注意：即使其他用户仍在引用相同 hash，本接口也会强制清理磁盘文件。其他用户的素材将无法 `pull` 或 `preview`，但其数据库记录不会被删除
 

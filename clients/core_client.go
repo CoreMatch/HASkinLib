@@ -78,8 +78,30 @@ func (c *CoreClient) VerifyToken(token string) (*models.AuthenticatedUser, error
 	}
 
 	return &models.AuthenticatedUser{
-		UID:   resp.Data.UID,
-		UUID:  resp.Data.UUID,
-		Email: resp.Data.Email,
+		UID:      resp.Data.UID,
+		UUID:     resp.Data.UUID,
+		Email:    resp.Data.Email,
+		Username: resp.Data.Username,
+	}, nil
+}
+
+func (c *CoreClient) GetUserInfo(uuid string) (*models.AuthenticatedUser, error) {
+	var resp struct {
+		Success bool                    `json:"success"`
+		Data    models.CoreUserIdentity `json:"data"`
+	}
+
+	if err := c.doRequest(http.MethodGet, "/services/users/"+uuid, nil, &resp); err != nil {
+		return nil, err
+	}
+	if !resp.Success {
+		return nil, fmt.Errorf("user info lookup failed")
+	}
+
+	return &models.AuthenticatedUser{
+		UID:      resp.Data.UID,
+		UUID:     resp.Data.UUID,
+		Email:    resp.Data.Email,
+		Username: resp.Data.Username,
 	}, nil
 }

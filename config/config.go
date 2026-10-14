@@ -23,11 +23,12 @@ type ServerConfig struct {
 
 // DatabaseConfig 数据库连接配置，字段与 HRPAuth 保持一致。
 type DatabaseConfig struct {
-	Host     string
-	DBName   string
-	User     string
-	Password string
-	Charset  string
+	Host        string
+	DBName      string
+	User        string
+	Password    string
+	Charset     string
+	TablePrefix string
 }
 
 type CoreAPIConfig struct {
@@ -48,7 +49,7 @@ type TextureConfig struct {
 
 const ConfigFileName = "config.yaml"
 const ConfigFileDir = "./"
-const ConfigVersion = "5"
+const ConfigVersion = "6"
 
 var AppConfig *Config
 
@@ -60,11 +61,12 @@ func Load() {
 	port := ":2701"
 	cors := "*"
 	database := DatabaseConfig{
-		Host:     "127.0.0.1",
-		DBName:   "hrpa",
-		User:     "hrpa",
-		Password: "hrpa",
-		Charset:  "utf8mb4",
+		Host:        "127.0.0.1",
+		DBName:      "hrpa",
+		User:        "hrpa",
+		Password:    "hrpa",
+		Charset:     "utf8mb4",
+		TablePrefix: "hasl_",
 	}
 	coreAPI := CoreAPIConfig{
 		BaseURL:      "http://127.0.0.1:2778",
@@ -111,6 +113,9 @@ func Load() {
 			}
 			if v := getString(db, "charset"); v != "" {
 				database.Charset = v
+			}
+			if v := getString(db, "table_prefix"); v != "" {
+				database.TablePrefix = v
 			}
 		}
 		if core, ok := yamlConfig["core_api"].(map[string]any); ok {
