@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lnb/HRPAuth-Backend-Go/config"
@@ -58,6 +59,15 @@ func main() {
 	profileCtrl := controllers.NewProfileController()
 
 	r.GET("/example", exampleCtrl.Hello)
+	// 专用存活探针：不查数据库、不做重活，供容器 healthcheck 使用。
+	// 契约：HA-Contract docs/api/openapi/haskinlib-business.yaml `/health`。
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "ok",
+			"data":    gin.H{"status": "ok"},
+		})
+	})
 	r.POST("/texture/upload", uploadCtrl.UploadTexture)
 	r.GET("/texture/listpreview", listPreviewCtrl.List)
 	r.GET("/texture/preview/:preview_file", previewFileCtrl.Get)
