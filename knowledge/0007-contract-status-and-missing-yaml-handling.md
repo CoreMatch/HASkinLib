@@ -11,9 +11,11 @@ Accepted
 ## Context
 
 HA-Contract is the source of truth for externally visible behavior
-(`docs/api/README.md`: "OpenAPI is the source for paths and response
-structures"). For most of its life, HASkinLib had **no** OpenAPI file in
-HA-Contract: `docs/api/openapi/haskinlib-business.yaml` did not exist, and
+(`/home/lnb/Desktop/HA/HA-Contract/docs/api/README.md`: "OpenAPI is the
+source for paths and response structures"). For most of its life, HASkinLib
+had **no** OpenAPI file in HA-Contract:
+`/home/lnb/Desktop/HA/HA-Contract/docs/api/openapi/haskinlib-business.yaml`
+did not exist, and
 the README contract link went through break/fix cycles (commits `2828f25`,
 `8fc0a88`, `02ad589`, `cb98ff01` in this repo document that churn).
 
@@ -58,13 +60,15 @@ the README contract link went through break/fix cycles (commits `2828f25`,
   version was deleted by `badff2a3ce65b89fdb2fd937c25f33ff7bbf5fed`
   (2026-10-07), so the 2026-11-04 file is a rebuild of a once-deleted
   contract, not the first-ever addition.
-- README contract link + "rebuilt 2026-11-04" note: `README.md:8-10`.
+- README contract link + "rebuilt 2026-11-04" note: `README.md:L8-L10`.
 - Link break/fix history in this repo: commits
   `2828f25` (merge 'docs/drift-fix'), `8fc0a88` (fix broken OpenAPI link),
   `02ad589` (point README to rebuilt contract), `cb98ff01` (merge
   'docs/contract-align', current HEAD).
 - "OpenAPI is the source for paths and response structures": repo
-  HA-Contract, `docs/api/README.md` (Unified Constraints section).
+  HA-Contract, `/home/lnb/Desktop/HA/HA-Contract/docs/api/README.md`
+  (Unified Constraints section).
 - In-repo synced reference doc: `docs/skinlib-api.md` (endpoint list at
-  `:3-10`); legacy docs archived under HA-Contract
-  `archive/docs/HASkinLib` (referenced from `README.md:14`).
+  `docs/skinlib-api.md:L3-L10`); legacy docs archived under HA-Contract
+  `/home/lnb/Desktop/HA/HA-Contract/archive/docs/HASkinLib` (referenced
+  from `README.md:L14`).
