@@ -2,8 +2,10 @@ package config
 
 import (
 	"log"
+	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/goccy/go-yaml"
 )
@@ -29,6 +31,21 @@ type DatabaseConfig struct {
 	Password    string
 	Charset     string
 	TablePrefix string
+	Port        int
+}
+
+// Addr 返回 MySQL DSN 的拨号地址。设置了 Port 时优先使用独立端口字段
+// （并剥掉 Host 中可能内联的旧端口）；Port 为 0 时原样返回 Host，
+// 兼容既有 "ip:port" 内联写法。
+func (c DatabaseConfig) Addr() string {
+	if c.Port <= 0 {
+		return c.Host
+	}
+	host := c.Host
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	return net.JoinHostPort(host, strconv.Itoa(c.Port))
 }
 
 type CoreAPIConfig struct {
@@ -49,7 +66,7 @@ type TextureConfig struct {
 
 const ConfigFileName = "config.yaml"
 const ConfigFileDir = "./"
-const ConfigVersion = "6"
+const ConfigVersion = "7"
 
 var AppConfig *Config
 
@@ -121,6 +138,9 @@ func Load() {
 			}
 			if v := getString(db, "table_prefix"); v != "" {
 				database.TablePrefix = v
+			}
+			if v := getInt(db, "port"); v > 0 {
+				database.Port = v
 			}
 		}
 		if core, ok := yamlConfig["core_api"].(map[string]any); ok {
