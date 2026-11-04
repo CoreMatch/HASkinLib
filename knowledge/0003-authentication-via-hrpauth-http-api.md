@@ -56,24 +56,32 @@ Authenticate through HRPAuth's **HTTP API**, not a shared library:
 
 ## Evidence
 
-- Auth flow: `controllers/auth.go:14-45` (verify then refresh; UUID
-  required).
-- HTTP endpoints called: `clients/core_client.go:71-73`
-  (`POST /internal/verify-token`), `clients/core_client.go:94`
+- Auth flow: `controllers/auth.go::AuthenticateUser` (verify then refresh;
+  UUID required).
+- HTTP endpoints called: `clients/core_client.go::VerifyToken`
+  (`POST /internal/verify-token`), `clients/core_client.go::GetUserInfo`
   (`GET /services/users/` + uuid).
-- OAuth2 client_credentials wiring: `utils/core_api_client.go:36-42`
-  (TokenURL = base_url + `/oauth/token`), fallback when unconfigured
-  `utils/core_api_client.go:25-34`.
-- Default `core_api.base_url` `http://127.0.0.1:2778`: `config/config.go:71-75`.
+- OAuth2 client_credentials wiring: `utils/core_api_client.go::GetCoreAPIClient`
+  (TokenURL = base_url + `/oauth/token`; fallback when unconfigured is the
+  unauthenticated branch in the same function).
+- Default `core_api.base_url` (`http://127.0.0.1`, port `2778`):
+  `config/config.go (field: base_url)`.
 - Upstream side (repo HRPAuth @ `8dd67593`): routes registered under an
-  empty group prefix — `main.go:174` (`api := r.Group("")`),
-  `main.go:197` (`POST /internal/verify-token`), `main.go:201`
-  (`GET /services/users/:uuid`), `main.go:180` (`POST /oauth/token`).
-  Paths therefore match the client. Verified 2026-11-04.
-- Module path lineage: `main.go:7-9` (`github.com/lnb/HRPAuth-Backend-Go/...`).
+  empty group prefix —
+  [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L174 @ 8dd67593`
+  (`api := r.Group("")`),
+  [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L197 @ 8dd67593`
+  (`POST /internal/verify-token`),
+  [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L201 @ 8dd67593`
+  (`GET /services/users/:uuid`),
+  [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L180 @ 8dd67593`
+  (`POST /oauth/token`). Paths therefore match the client. Verified
+  2026-11-04.
+- Module path lineage: `main.go (field: github.com/lnb/HRPAuth-Backend-Go)`
+  (`github.com/lnb/HRPAuth-Backend-Go/...` imports).
 - Decision commit: `dca3325a5c36c5e9077bd90037cb6cba48020e96`
   ("refactor: verify skinlib users through HRPAuth core", 2026-10-14).
 - Legacy remember-token removal: commit
   `3423290f3d5546b1b5c782c7643864fe93aa37dd` ("chore: remove remember token
   code and add build script", 2026-10-03); deprecation note in
-  `docs/skinlib-api.md:31`.
+  `docs/skinlib-api.md:L31`.

@@ -49,19 +49,24 @@ sessions, and does not talk to Minecraft clients directly.
   HRPAuth-Yggdrasil-API / HASkinProxy, not here; adding Yggdrasil routes
   here would violate this boundary.
 - The external path/response definitions for these routes live in
-  HA-Contract (`docs/api/openapi/haskinlib-business.yaml`); this entry only
-  records the internal scope decision.
+  HA-Contract (`/home/lnb/Desktop/HA/HA-Contract/docs/api/openapi/haskinlib-business.yaml`);
+  this entry only records the internal scope decision.
 
 ## Evidence
 
-- Routes: `main.go:60-66` (commit `cb98ff01`, HEAD of `main`).
-- Default port `:2701`: `config/config.go:61`; also `build/config.yaml:9`.
-- Page size 16: `controllers/list_preview_controller.go:13`.
-- Tag filtering via `FIND_IN_SET`: `controllers/list_preview_controller.go:91,130`.
+- Routes: `main.go:L60-66 @ cb98ff01` (commit `cb98ff01`, then HEAD of
+  `main`).
+- Default port `:2701`: `config/config.go (field: port)`; also
+  `/home/lnb/Desktop/HA/HASkinLib/build/config.yaml (field: port)`
+  (gitignored local runtime config).
+- Page size 16: `controllers/list_preview_controller.go::defaultListPreviewPageSize`.
+- Tag filtering via `FIND_IN_SET`: `controllers/list_preview_controller.go::querySkinPreviewItems`,
+  `controllers/list_preview_controller.go::queryCapePreviewItems`.
 - Pull endpoint introduced: commit `d78272b6cd0f82d13f3f767b84990553bf2821e8`
   ("feat(api): add texture pull endpoint by sha256 hash", 2026-08-02).
-- `/profile/textures` shelved status: `docs/skinlib-api.md:10` and
-  `docs/skinlib-api.md:443-444` ("状态：暂时搁置"); route still registered at
-  `main.go:66`. Shelving is a documented plan statement; the reason for
-  shelving is not recorded in the repo — **pending author confirmation**.
-- Positioning as HA-Contract skin-library component: `README.md:3`.
+- `/profile/textures` shelved status: `docs/skinlib-api.md:L10` and
+  `docs/skinlib-api.md:L443-L444` ("状态：暂时搁置"); route still registered at
+  `main.go::GetMyTextures`. Shelving is a documented plan statement; the
+  reason for shelving is not recorded in the repo — **pending author
+  confirmation**.
+- Positioning as HA-Contract skin-library component: `README.md:L3`.

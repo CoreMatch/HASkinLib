@@ -45,13 +45,14 @@ whether disk cleanup is reference-counted or forced.
 ## Evidence
 
 - Force-delete comment and implementation:
-  `services/delete_texture_service.go:30-31` ("强制清理磁盘上的原始 PNG 文件和
+  `services/delete_texture_service.go::DeleteTexture` ("强制清理磁盘上的原始 PNG 文件和
   WebP 预览图,即使其他用户仍引用相同 hash") and
-  `services/delete_texture_service.go:99-117` (`removeTextureFiles`,
-  comment "强制删除策略").
-- Row deletion scoped to caller uid: `services/delete_texture_service.go:53-97`.
+  `services/delete_texture_service.go::removeTextureFiles`
+  (comment "强制删除策略").
+- Row deletion scoped to caller uid: `services/delete_texture_service.go::deleteSkinTexture`,
+  `services/delete_texture_service.go::deleteCapeTexture`.
 - Controller (auth + param validation, no uid input accepted):
-  `controllers/delete_texture_controller.go:33-83`.
-- Documented side effect incl. cross-user impact: `docs/skinlib-api.md:526-530`.
+  `controllers/delete_texture_controller.go::DeleteTexture`.
+- Documented side effect incl. cross-user impact: `docs/skinlib-api.md:L526-L530`.
 - Introduced by commit `3ec8473a6cf30b3059be6be54151c02c953bad42`
   ("feat: add texture deletion API and supporting code", 2026-09-06).

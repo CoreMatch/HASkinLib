@@ -22,9 +22,14 @@ self-hosting and maintenance.
 
 - Entries are numbered `NNNN-<slug>.md`, written in English, and follow:
   Status / Date / Context / Decision / Consequences / Evidence.
-- Evidence must be checked against the repository before writing
-  (`file:line`, commit hash). Anything that could not be verified is
-  marked `not verified`. Gaps are stated honestly, never papered over.
+- Evidence must be checked against the repository before writing: stable
+  anchors resolved from the repo root — symbol anchors `file.ext::Symbol`,
+  field anchors `file.ext (field: key)`, time-point anchors
+  `file.ext:Lx-Ly @ <commit>` for historical snapshots, or bare line
+  anchors `file.ext:Lx-Ly` only as a last resort; cross-repo citations are
+  marked `[xref]` (absolute paths where possible). Anything that could not
+  be verified is marked `not verified`. Gaps are stated honestly, never
+  papered over.
 - New entries get the next free number; superseded entries change Status
   to `Superseded by NNNN` instead of being deleted.
 
