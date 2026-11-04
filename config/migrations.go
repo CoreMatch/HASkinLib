@@ -22,6 +22,7 @@ func configMigrations() []ConfigMigration {
 		{FromVersion: "3", ToVersion: "4", Migrate: migrateV3ToV4},
 		{FromVersion: "4", ToVersion: "5", Migrate: migrateV4ToV5},
 		{FromVersion: "5", ToVersion: "6", Migrate: migrateV5ToV6},
+		{FromVersion: "6", ToVersion: "7", Migrate: migrateV6ToV7},
 	}
 }
 
@@ -173,6 +174,18 @@ func migrateV5ToV6(cfg map[string]any) error {
 		database["table_prefix"] = "hasl_"
 	}
 	cfg["version"] = "6"
+	return nil
+}
+
+// migrateV6ToV7 adds the optional database port field. The default 0 keeps
+// the legacy behavior where any port is inlined into the host value
+// ("ip:port"); DatabaseConfig.Addr prefers the standalone field when set.
+func migrateV6ToV7(cfg map[string]any) error {
+	database := ensureSection(cfg, "database")
+	if _, exists := database["port"]; !exists {
+		database["port"] = 0
+	}
+	cfg["version"] = "7"
 	return nil
 }
 

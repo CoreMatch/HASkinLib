@@ -150,3 +150,46 @@ func TestMigrateConfigV5ToV6AddsTablePrefix(t *testing.T) {
 		t.Fatalf("expected table_prefix hasl_, got %v", database["table_prefix"])
 	}
 }
+
+func TestMigrateConfigV6ToV7AddsDatabasePort(t *testing.T) {
+	cfg := map[string]any{
+		"version":  "6",
+		"database": map[string]any{"host": "db.example:3307"},
+	}
+
+	out, changed, err := MigrateConfig(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !changed {
+		t.Fatal("expected v6->v7 migration to run")
+	}
+	if out["version"] != "7" {
+		t.Fatalf("expected version 7, got %v", out["version"])
+	}
+
+	database := out["database"].(map[string]any)
+	if database["port"] != 0 {
+		t.Errorf("expected default port 0, got %v", database["port"])
+	}
+	if database["host"] != "db.example:3307" {
+		t.Errorf("legacy inline host must stay untouched, got %v", database["host"])
+	}
+}
+
+func TestMigrateConfigV6ToV7KeepsExistingPort(t *testing.T) {
+	cfg := map[string]any{
+		"version":  "6",
+		"database": map[string]any{"host": "db.example", "port": 3307},
+	}
+
+	out, _, err := MigrateConfig(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	database := out["database"].(map[string]any)
+	if database["port"] != 3307 {
+		t.Errorf("existing port must be preserved, got %v", database["port"])
+	}
+}
