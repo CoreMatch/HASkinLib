@@ -51,9 +51,13 @@ the README contract link went through break/fix cycles (commits `2828f25`,
 
 ## Evidence
 
-- Contract file first added: repo HA-Contract (@ `21c7147d`),
+- Contract file history: repo HA-Contract (@ `21c7147d`),
   `git log --diff-filter=A -- docs/api/openapi/haskinlib-business.yaml` →
-  `4baf9a729ae448d1f953f2309b6898e27c896d16` (2026-11-04).
+  two additions: `24ba96d1b619f9f561256fec25b34ece7b74f72b` (2026-08-13)
+  and `4baf9a729ae448d1f953f2309b6898e27c896d16` (2026-11-04); the first
+  version was deleted by `badff2a3ce65b89fdb2fd937c25f33ff7bbf5fed`
+  (2026-10-07), so the 2026-11-04 file is a rebuild of a once-deleted
+  contract, not the first-ever addition.
 - README contract link + "rebuilt 2026-11-04" note: `README.md:8-10`.
 - Link break/fix history in this repo: commits
   `2828f25` (merge 'docs/drift-fix'), `8fc0a88` (fix broken OpenAPI link),
