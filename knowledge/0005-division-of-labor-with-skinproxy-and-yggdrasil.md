@@ -38,21 +38,22 @@ Responsibility split:
 
 The texture-byte handoff between HASkinLib and Yggdrasil-API is therefore
 **filesystem-level**: HASkinLib writes `<storage_dir>/<hash>`; the
-Yggdrasil-API service reads `<textures_storage>/textures/<hash>`. For the
-end-to-end flow to work, deployment must make these point at the same
-content (same volume, or `storage_dir` set to `<textures_storage>/textures`).
+Yggdrasil-API service reads `<textures_storage>/textures/<hash>`. The two
+services deliberately do **not** share one configured mount point directly;
+the deployment layer points both at the same content (e.g.
+`storage_dir` set to `<textures_storage>/textures`).
 
 ## Consequences
 
 - Benefit: no HTTP coupling between the two storage-adjacent services;
   texture download latency is local file I/O on the Yggdrasil-API side.
-- Cost / gap: the wiring is a deployment-time invariant with **no runtime
-  check**. The deployer templates use different relative paths
+- Design note (confirmed by the author, 2026-11-04): the differing mount
+  points are **intentional separation, not a gap** — storage and management
+  belong to HASkinLib, while the protocol surface reads from Yggdrasil-API's
+  own local directory, and the deployment layer wires the two to the same
+  content. The deployer templates intentionally use different relative paths
   (`./data/textures` for HASkinLib vs `./storage` textures_storage for
-  Yggdrasil-API), so the invariant holds only via the actual deployment
-  layout (volumes/mounts). This is **not verified** from the repositories
-  alone; confirm against the running deployment before debugging
-  "uploaded skin not visible in game" issues.
+  Yggdrasil-API); that separation is by design.
 - Constraint: preview file naming (`<hash>_<type>.webp`) and the flat
   `<hash>` texture naming are de facto shared conventions; changing either
   breaks the Yggdrasil-API side silently (404s).
@@ -75,8 +76,9 @@ content (same volume, or `storage_dir` set to `<textures_storage>/textures`).
   `deploy/config/haskinlib.yaml.tmpl:14-20`
   (`storage_dir: ./data/textures`, `preview_storage_dir: ./data/previews`),
   `deploy/config/hrpauth-yggdrasil-api.yaml.tmpl:72`
-  (`textures_storage: ./storage`). Path mismatch ⇒ deployment-level wiring
-  required; **not verified** against a live deployment.
+  (`textures_storage: ./storage`). The differing paths are the intentional
+  separation described above; the deployment layer points both at the same
+  content.
 - HASkinProxy's upstream is the Yggdrasil surface, not HASkinLib: repo
   HASkinProxy, `internal/hrpauth/client.go` (`FetchTexture` →
   `{base}/textures/:hash`); see HASkinProxy knowledge base entry 0002.
