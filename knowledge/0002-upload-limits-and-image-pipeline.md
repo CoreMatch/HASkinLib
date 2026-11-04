@@ -54,21 +54,38 @@ cheap, uniform preview format for the web gallery.
 
 ## Evidence
 
-- Defaults (2 MiB, +256 KiB, 5/min, 60 s): `config/config.go:76-83`;
-  controller constants `controllers/upload_controller.go:21-26`.
-- `MaxBytesReader` + 413 handling: `controllers/upload_controller.go:57,76-89`.
-- Token+IP rate limiting: `controllers/upload_controller.go:67-70`;
-  limiter implementation `services/upload_rate_limiter.go:23-47`.
-- PNG-only + size whitelist: `services/upload_service.go:32,326-332`;
-  error mapping `controllers/upload_controller.go:111-124`.
-- Cape 22x17 → 64x32 normalization: `services/upload_service.go:309-313,334-339`.
-- SHA-256 content addressing: `services/upload_service.go:378-381`;
-  flat storage path `services/upload_service.go:393`.
-- Upsert on (uid, hash): `services/upload_service.go:129-160` (skin),
-  `:162-192` (cape).
-- WebP preview rendering: `services/upload_service.go:349-357` (encoder),
-  `:359-376` (pipeline), `:429-476` (skin/cape composition),
-  `:40` (`previewScale = 8`), `:425-427` (preview file naming).
+- Defaults (2 MiB, +256 KiB, 5/min, 60 s): `config/config.go (field: max_upload_bytes)`,
+  `config/config.go (field: max_request_bytes)`,
+  `config/config.go (field: rate_limit_per_minute)`,
+  `config/config.go (field: rate_limit_window_seconds)`;
+  controller constants `controllers/upload_controller.go::defaultMaxTextureUploadBytes`,
+  `controllers/upload_controller.go::defaultMaxTextureRequestBytes`,
+  `controllers/upload_controller.go::defaultUploadRateLimitPerMinute`,
+  `controllers/upload_controller.go::defaultUploadRateLimitWindowSeconds`.
+- `MaxBytesReader` + 413 handling: `controllers/upload_controller.go::UploadTexture`
+  (MaxBytesReader wrap + fileHeader.Size check),
+  `controllers/upload_controller.go::isBodyTooLargeError`.
+- Token+IP rate limiting: `controllers/upload_controller.go::UploadTexture`
+  (token/ip `Allow` gate); limiter implementation
+  `services/upload_rate_limiter.go::UploadRateLimiter`,
+  `services/upload_rate_limiter.go::Allow`.
+- PNG-only + size whitelist: `services/upload_service.go::readTextureFile`
+  (PNG decode + size gate), `services/upload_service.go::isValidSkinSize`,
+  `services/upload_service.go::isValidCapeSize`;
+  error mapping `controllers/upload_controller.go::UploadTexture`
+  (service-error → status/code switch).
+- Cape 22x17 → 64x32 normalization: `services/upload_service.go::readTextureFile`
+  (22x17 branch), `services/upload_service.go::normalizeCapeImage`.
+- SHA-256 content addressing: `services/upload_service.go::calculateHash`;
+  flat storage path `services/upload_service.go::saveTextureFile`.
+- Upsert on (uid, hash): `services/upload_service.go::upsertSkinRecord`
+  (skin), `services/upload_service.go::upsertCapeRecord` (cape).
+- WebP preview rendering: `services/upload_service.go::encodeWebP`
+  (encoder), `services/upload_service.go::generatePreviewImage` (pipeline),
+  `services/upload_service.go::renderSkinPreview` /
+  `services/upload_service.go::renderCapePreview` (skin/cape composition),
+  `services/upload_service.go::previewScale` (`previewScale = 8`),
+  `services/upload_service.go::buildPreviewFileName` (preview file naming).
 - Introduced by commits `ba188415138a0d4e87756ff690fc4dac4b12957b`
   ("feat: add upload rate limiting and texture validation", 2026-08-02) and
   `c828b2e321ee5331d094128890ee858148b91d16`
