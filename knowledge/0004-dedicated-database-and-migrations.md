@@ -54,21 +54,25 @@ standard, standalone migration chain.**
 
 ## Evidence
 
-- Decision comment ("方案 1 明确要求独立数据库"): `controllers/startup_controller.go:170-172`.
-- Legacy shared-table rejection: `controllers/startup_controller.go:266-311`
-  (error text at `:306-307`: "legacy shared schema_migrations table
+- Decision comment ("方案 1 明确要求独立数据库"): `controllers/startup_controller.go::EnsureMigrations`.
+- Legacy shared-table rejection: `controllers/startup_controller.go::ensureStandardMigrationsTable`
+  (error text: "legacy shared schema_migrations table
   detected ... option 1 requires a dedicated HASkinLib database").
-- Prefix rewriting of embedded migrations: `controllers/startup_controller.go:239-264`.
+- Prefix rewriting of embedded migrations: `controllers/startup_controller.go::buildMigrationFS`.
 - Baseline schema + legacy `texture_list` migration:
-  `database/migrations/000006_merged_baseline.up.sql:4-74`.
+  `database/migrations/000006_merged_baseline.up.sql::texture_list_skin`,
+  `database/migrations/000006_merged_baseline.up.sql::texture_list_cape`.
 - Name-length migrations: `database/migrations/000007_limit_skin_name.up.sql`,
   `database/migrations/000008_limit_cape_name.up.sql`.
-- Default DB values and comment: `config/config.go:60-70` (default
-  `db_name: hrpa`, `table_prefix: hasl_`).
-- Model/table naming: `models/models.go:43-91` (unique key `(uid, hash)`,
+- Default DB values and comment: `config/config.go (field: db_name)`
+  (default `db_name: hrpa`), `config/config.go (field: table_prefix)`
+  (`table_prefix: hasl_`).
+- Model/table naming: `models/models.go::TextureListSkinBase`,
+  `models/models.go::TextureListCape` (unique key `(uid, hash)`,
   column `previewfile`).
 - Deployer template uses `${DB_NAME}`: repo HA-Services-Deployer
-  (@ `657bcb88`), `deploy/config/haskinlib.yaml.tmpl:3-9`.
+  (@ `657bcb88`),
+  [xref] `/home/lnb/Desktop/HA/HA-Services-Deployer/deploy/config/haskinlib.yaml.tmpl:L3-L9 @ 657bcb88`.
 - Decision commit: `5f469c4d864294b84d46bd6e33993abf1e79da58`
   ("refactor: switch HASkinLib to standard standalone migrations",
   2026-10-14). Earlier multi-service migration support (the shared era) was
