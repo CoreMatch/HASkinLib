@@ -6,8 +6,7 @@ Accepted
 
 ## Date
 
-2026-11-04 (recorded when the knowledge base was created; the division
-itself emerged with the pull endpoint and preview API, 2026-08-02)
+2026-11-04
 
 ## Context
 

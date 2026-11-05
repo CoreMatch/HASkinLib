@@ -6,8 +6,7 @@ Accepted
 
 ## Date
 
-2026-10-14 (commit `dca3325a`; user refresh + table prefix in
-`b59ee173a1852bfdc376c9a15e29f64b63f07b2d`, same-day follow-up)
+2026-10-14
 
 ## Context
 
@@ -36,8 +35,7 @@ Authenticate through HRPAuth's **HTTP API**, not a shared library:
    against `{core_api.base_url}/oauth/token` when `client_id`/`client_secret`
    are configured; without credentials it falls back to unauthenticated
    calls (logged as such).
-4. Legacy form-field auth (`remember_token`, `rt`) was removed; only Bearer
-   tokens are accepted.
+4. Only `Authorization: Bearer` tokens are accepted.
 
 ## Consequences
 
@@ -79,9 +77,3 @@ Authenticate through HRPAuth's **HTTP API**, not a shared library:
   2026-11-04.
 - Module path lineage: `main.go (field: github.com/lnb/HRPAuth-Backend-Go)`
   (`github.com/lnb/HRPAuth-Backend-Go/...` imports).
-- Decision commit: `dca3325a5c36c5e9077bd90037cb6cba48020e96`
-  ("refactor: verify skinlib users through HRPAuth core", 2026-10-14).
-- Legacy remember-token removal: commit
-  `3423290f3d5546b1b5c782c7643864fe93aa37dd` ("chore: remove remember token
-  code and add build script", 2026-10-03); deprecation note in
-  `docs/skinlib-api.md:L31`.
