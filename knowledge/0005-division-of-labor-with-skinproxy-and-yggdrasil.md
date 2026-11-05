@@ -4,10 +4,6 @@
 
 Accepted
 
-## Date
-
-2026-11-04
-
 ## Context
 
 Three services touch "skins" in the HA stack and their boundaries are easy
@@ -46,7 +42,7 @@ the deployment layer points both at the same content (e.g.
 
 - Benefit: no HTTP coupling between the two storage-adjacent services;
   texture download latency is local file I/O on the Yggdrasil-API side.
-- Design note (confirmed by the author, 2026-11-04): the differing mount
+- Design note (confirmed by the author): the differing mount
   points are **intentional separation, not a gap** — storage and management
   belong to HASkinLib, while the protocol surface reads from Yggdrasil-API's
   own local directory, and the deployment layer wires the two to the same

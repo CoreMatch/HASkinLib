@@ -4,10 +4,6 @@
 
 Accepted
 
-## Date
-
-2026-10-14
-
 ## Context
 
 HASkinLib needs to know *which HA user* uploads or deletes a texture. The
@@ -73,7 +69,6 @@ Authenticate through HRPAuth's **HTTP API**, not a shared library:
   [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L201 @ 8dd67593`
   (`GET /services/users/:uuid`),
   [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L180 @ 8dd67593`
-  (`POST /oauth/token`). Paths therefore match the client. Verified
-  2026-11-04.
+  (`POST /oauth/token`). Paths therefore match the client.
 - Module path lineage: `main.go (field: github.com/lnb/HRPAuth-Backend-Go)`
   (`github.com/lnb/HRPAuth-Backend-Go/...` imports).
