@@ -4,10 +4,6 @@
 
 Accepted
 
-## Date
-
-2026-09-06
-
 ## Context
 
 Textures are content-addressed: multiple users can hold rows pointing at the

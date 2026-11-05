@@ -4,10 +4,6 @@
 
 Accepted
 
-## Date
-
-2026-11-04
-
 ## Context
 
 HA-Contract is the source of truth for externally visible behavior
@@ -49,7 +45,8 @@ in HA-Contract.
 
 ## Evidence
 
-- README contract link + "rebuilt 2026-11-04" note: `README.md:L8-L10`.
+- README contract link + "rebuilt from the current implementation" note:
+  `README.md:L8-L10`.
 - "OpenAPI is the source for paths and response structures": repo
   HA-Contract, `/home/lnb/Desktop/HA/HA-Contract/docs/api/README.md`
   (Unified Constraints section).

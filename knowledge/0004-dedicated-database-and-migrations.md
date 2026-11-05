@@ -4,10 +4,6 @@
 
 Accepted
 
-## Date
-
-2026-10-14
-
 ## Context
 
 HASkinLib originally shared migration bookkeeping with HRPAuth: a single

@@ -4,10 +4,6 @@
 
 Accepted
 
-## Date
-
-2026-08-02
-
 ## Context
 
 User-uploaded images are stored on disk, served publicly, and rendered into

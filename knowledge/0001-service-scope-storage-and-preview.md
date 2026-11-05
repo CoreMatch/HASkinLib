@@ -4,10 +4,6 @@
 
 Accepted
 
-## Date
-
-2026-08-02
-
 ## Context
 
 The HA ecosystem needs a place where registered users can upload Minecraft
