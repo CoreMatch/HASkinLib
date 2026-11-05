@@ -6,7 +6,7 @@ Accepted
 
 ## Date
 
-2026-08-02 (commit `ba188415` limits/validation; commit `c828b2e3` preview pipeline)
+2026-08-02
 
 ## Context
 
@@ -86,7 +86,3 @@ cheap, uniform preview format for the web gallery.
   `services/upload_service.go::renderCapePreview` (skin/cape composition),
   `services/upload_service.go::previewScale` (`previewScale = 8`),
   `services/upload_service.go::buildPreviewFileName` (preview file naming).
-- Introduced by commits `ba188415138a0d4e87756ff690fc4dac4b12957b`
-  ("feat: add upload rate limiting and texture validation", 2026-08-02) and
-  `c828b2e321ee5331d094128890ee858148b91d16`
-  ("feat(upload): add texture preview image support", 2026-08-02).

@@ -6,7 +6,7 @@ Accepted
 
 ## Date
 
-2026-10-14 (commit `5f469c4d`)
+2026-10-14
 
 ## Context
 
@@ -73,9 +73,3 @@ standard, standalone migration chain.**
 - Deployer template uses `${DB_NAME}`: repo HA-Services-Deployer
   (@ `657bcb88`),
   [xref] `/home/lnb/Desktop/HA/HA-Services-Deployer/deploy/config/haskinlib.yaml.tmpl:L3-L9 @ 657bcb88`.
-- Decision commit: `5f469c4d864294b84d46bd6e33993abf1e79da58`
-  ("refactor: switch HASkinLib to standard standalone migrations",
-  2026-10-14). Earlier multi-service migration support (the shared era) was
-  introduced by `8f73ca959a7a3eb8f49ae3b22c18c73f6a5e240c` (2026-08-02) and
-  replaced by this decision; the merged baseline replaced incremental
-  migrations in `ad8606846a92349f040b8a1a86ce7843c6125075` (2026-08-02).

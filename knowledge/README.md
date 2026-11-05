@@ -24,9 +24,8 @@ self-hosting and maintenance.
   Status / Date / Context / Decision / Consequences / Evidence.
 - Evidence must be checked against the repository before writing: stable
   anchors resolved from the repo root — symbol anchors `file.ext::Symbol`,
-  field anchors `file.ext (field: key)`, time-point anchors
-  `file.ext:Lx-Ly @ <commit>` for historical snapshots, or bare line
-  anchors `file.ext:Lx-Ly` only as a last resort; cross-repo citations are
+  field anchors `file.ext (field: key)`, or bare line anchors
+  `file.ext:Lx-Ly` only as a last resort; cross-repo citations are
   marked `[xref]` (absolute paths where possible). Anything that could not
   be verified is marked `not verified`. Gaps are stated honestly, never
   papered over.
@@ -43,4 +42,4 @@ self-hosting and maintenance.
 | [0004](./0004-dedicated-database-and-migrations.md) | Dedicated database and standalone migrations | Accepted | 2026-10-14 | HASkinLib runs golang-migrate on its own migration chain and refuses to start against the legacy shared `schema_migrations` table (option 1: dedicated database). |
 | [0005](./0005-division-of-labor-with-skinproxy-and-yggdrasil.md) | Division of labor with HASkinProxy and Yggdrasil-API | Accepted | 2026-11-04 | HASkinLib stores and manages textures; HRPAuth-Yggdrasil-API serves the Minecraft-facing surface; HASkinProxy translates to CSL. The texture-byte handoff is filesystem-level, not HTTP. |
 | [0006](./0006-delete-semantics-force-file-removal.md) | Delete semantics: forced file removal | Accepted | 2026-09-06 | `POST /texture/delete` removes the caller's DB row and force-deletes the on-disk PNG and WebP even when other users reference the same hash. |
-| [0007](./0007-contract-status-and-missing-yaml-handling.md) | Contract status and missing-YAML handling | Accepted | 2026-11-04 | HASkinLib had no OpenAPI contract until 2026-11-04; `haskinlib-business.yaml` was then rebuilt from the implementation. While a contract is missing, code + `docs/skinlib-api.md` are the implementation reference, and gaps are fixed in HA-Contract, not here. |
+| [0007](./0007-contract-status-and-missing-yaml-handling.md) | Contract status and missing-YAML handling | Accepted | 2026-11-04 | The external contract is HA-Contract's `haskinlib-business.yaml`, rebuilt from the implementation; while a contract file is missing, code + `docs/skinlib-api.md` are the implementation reference, and gaps are fixed in HA-Contract, not here. |

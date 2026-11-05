@@ -6,7 +6,7 @@ Accepted
 
 ## Date
 
-2026-08-02 (route surface settled with the pull endpoint, `d78272b6`)
+2026-08-02
 
 ## Context
 
@@ -54,16 +54,13 @@ sessions, and does not talk to Minecraft clients directly.
 
 ## Evidence
 
-- Routes: `main.go:L60-66 @ cb98ff01` (commit `cb98ff01`, then HEAD of
-  `main`).
+- Routes: `main.go:L71-L76`.
 - Default port `:2701`: `config/config.go (field: port)`; also
   `/home/lnb/Desktop/HA/HASkinLib/build/config.yaml (field: port)`
   (gitignored local runtime config).
 - Page size 16: `controllers/list_preview_controller.go::defaultListPreviewPageSize`.
 - Tag filtering via `FIND_IN_SET`: `controllers/list_preview_controller.go::querySkinPreviewItems`,
   `controllers/list_preview_controller.go::queryCapePreviewItems`.
-- Pull endpoint introduced: commit `d78272b6cd0f82d13f3f767b84990553bf2821e8`
-  ("feat(api): add texture pull endpoint by sha256 hash", 2026-08-02).
 - `/profile/textures` shelved status: `docs/skinlib-api.md:L10` and
   `docs/skinlib-api.md:L443-L444` ("状态：暂时搁置"); route still registered at
   `main.go::GetMyTextures`. Shelving is a documented plan statement; the

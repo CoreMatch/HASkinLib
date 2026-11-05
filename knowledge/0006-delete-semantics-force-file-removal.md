@@ -6,7 +6,7 @@ Accepted
 
 ## Date
 
-2026-09-06 (commit `3ec8473a`)
+2026-09-06
 
 ## Context
 
@@ -54,5 +54,3 @@ whether disk cleanup is reference-counted or forced.
 - Controller (auth + param validation, no uid input accepted):
   `controllers/delete_texture_controller.go::DeleteTexture`.
 - Documented side effect incl. cross-user impact: `docs/skinlib-api.md:L526-L530`.
-- Introduced by commit `3ec8473a6cf30b3059be6be54151c02c953bad42`
-  ("feat: add texture deletion API and supporting code", 2026-09-06).
