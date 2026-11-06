@@ -52,5 +52,5 @@ in HA-Contract.
   (Unified Constraints section).
 - In-repo synced reference doc: `docs/skinlib-api.md` (endpoint list at
   `docs/skinlib-api.md:L3-L10`); legacy docs archived under HA-Contract
-  `/home/lnb/Desktop/HA/HA-Contract/archive/docs/HASkinLib` (referenced
+  `/home/lnb/Desktop/HA/HASkinLib/knowledge/archive` (referenced
   from `README.md:L14`).
