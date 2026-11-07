@@ -172,9 +172,11 @@ func (sc *StartupController) ensureTextureStorageDir(cfg map[string]any) error {
 // schema_migrations 表；一旦检测到旧结构，会直接报错并提示切换到独立库。
 func (sc *StartupController) EnsureMigrations() error {
 	cfg := config.AppConfig.Database
+	// 用 Addr() 而非 Host：尊重 database.port（v7 起 host/port 分离），
+	// 与 database/database.go 的运行期 DSN 保持一致。
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s?charset=%s&parseTime=True&loc=Local&multiStatements=true",
-		cfg.User, cfg.Password, cfg.Host, cfg.DBName, cfg.Charset,
+		cfg.User, cfg.Password, cfg.Addr(), cfg.DBName, cfg.Charset,
 	)
 
 	db, err := sql.Open("mysql", dsn)
