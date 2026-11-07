@@ -1,0 +1,62 @@
+# HASkinLib 部署声明（deploy-manifest v1）
+# schema 依据：HA-Services-Deployer internal/manifest/（SchemaVersion=1）
+manifest_version: 1
+kind: service
+project: haskinlib
+display_name: HASkinLib
+group: satellite
+# 仓库 git tag 0.6.0（唯一版本 tag）。
+service_version: "0.6.0"
+
+facts:
+  ports:
+    # deploy/config/haskinlib.yaml.tmpl: server.port :2701；compose 默认对外映射
+    - name: http
+      port: 2701
+      exposure: public
+  health:
+    # main.go r.GET("/health")；compose healthcheck 同路径
+    http:
+      port_name: http
+      path: /health
+      expect_status: 200
+      timeout_seconds: 5
+      interval_seconds: 30
+      retries: 3
+  depends_on:
+    # database 段为启动硬依赖（模板无 redis 段，不依赖 redis）。
+    - project: mysql
+      kind: required
+    # core_api（运行时调 HRPAuth /internal/verify-token 等，模板注释）；
+    # 启动不排序——compose 中 haskinlib 无 depends_on，故记 optional。
+    - project: hrpauth
+      kind: optional
+  migration:
+    # main.go EnsureMigrations（golang-migrate，失败即 fatal；
+    # PROD-UPGRADE-EXECUTED-20261106 §4 实测 "migration completed at version 8"）；
+    # 配置启动期自动迁移（v4→v7 等，config/migrations.go）。
+    mode: auto_on_startup
+  data_dirs:
+    # 模板 textures.storage_dir / textures.preview_storage_dir
+    - ./data/textures
+    - ./data/previews
+  config:
+    # config/config.go ConfigFileName="config.yaml"；
+    # 模板版本 = 模板首行 version: "7"（代码 config.ConfigVersion 同为 "7"）。
+    - path: config.yaml
+      template_version: "7"
+  static_assets: ""
+
+baremetal:
+  process:
+    manager: aapanel
+  install:
+    # PROD-FILEREFRESH-20261107 §1：二进制在位路径 /www/wwwroot/sl/hasl
+    root: /www/wwwroot/sl
+    binary_name: hasl
+  artifact:
+    source: local_path
+    local_path: /home/lnb/Desktop/HA/HASkinLib/build/hasl
+
+container:
+  enabled: false
