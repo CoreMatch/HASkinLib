@@ -46,11 +46,11 @@ in HA-Contract.
 ## Evidence
 
 - README contract link + "rebuilt from the current implementation" note:
-  `README.md:L8-L10 ~ - [API 标准与规范](https://github.com/CoreMatch/HA-Co`.
+  `README.md:L8-L10 fp=194b9403 ~ - [API 标准与规范](https://github.com/CoreMatch/HA-Co`.
 - "OpenAPI is the source for paths and response structures": repo
   HA-Contract, `/home/lnb/Desktop/HA/HA-Contract/docs/api/README.md`
   (Unified Constraints section).
 - In-repo synced reference doc: `docs/skinlib-api.md` (endpoint list at
-  `docs/skinlib-api.md:L3-L10 ~ 当前版本已开放以下接口：`); legacy docs archived under HA-Contract
+  `docs/skinlib-api.md:L3-L10 fp=2613f4d5 ~ 当前版本已开放以下接口：`); legacy docs archived under HA-Contract
   `/home/lnb/Desktop/HA/HASkinLib/knowledge/archive` (referenced
-  from `README.md:L14-L14 ~ 旧文档已归档至 [archive/docs/HASkinLib](https://github.`).
+  from `README.md:L14-L14 fp=21d18dc3 ~ 旧文档已归档至 [archive/docs/HASkinLib](https://github.`).
