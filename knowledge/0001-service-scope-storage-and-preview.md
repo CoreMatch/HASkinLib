@@ -50,16 +50,16 @@ sessions, and does not talk to Minecraft clients directly.
 
 ## Evidence
 
-- Routes: `main.go:L71-L76`.
+- Routes: `main.go::main`.
 - Default port `:2701`: `config/config.go (field: port)`; also
   `/home/lnb/Desktop/HA/HASkinLib/build/config.yaml (field: port)`
   (gitignored local runtime config).
 - Page size 16: `controllers/list_preview_controller.go::defaultListPreviewPageSize`.
 - Tag filtering via `FIND_IN_SET`: `controllers/list_preview_controller.go::querySkinPreviewItems`,
   `controllers/list_preview_controller.go::queryCapePreviewItems`.
-- `/profile/textures` shelved status: `docs/skinlib-api.md:L10` and
-  `docs/skinlib-api.md:L443-L444` ("状态：暂时搁置"); route still registered at
+- `/profile/textures` shelved status: `docs/skinlib-api.md:L10-L10 ~ - `GET /profile/textures`：获取当前登录用户的材质列表（**[状态：暂时` and
+  `docs/skinlib-api.md:L443-L444 ~ > **注意：此接口当前状态为 [暂时搁置]**。` ("状态：暂时搁置"); route still registered at
   `main.go::GetMyTextures`. Shelving is a documented plan statement; the
   reason for shelving is not recorded in the repo — **pending author
   confirmation**.
-- Positioning as HA-Contract skin-library component: `README.md:L3`.
+- Positioning as HA-Contract skin-library component: `README.md:L3-L3 ~ 本项目是 HA-Contract 的皮肤库服务组件。`.

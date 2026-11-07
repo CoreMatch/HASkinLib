@@ -49,4 +49,4 @@ whether disk cleanup is reference-counted or forced.
   `services/delete_texture_service.go::deleteCapeTexture`.
 - Controller (auth + param validation, no uid input accepted):
   `controllers/delete_texture_controller.go::DeleteTexture`.
-- Documented side effect incl. cross-user impact: `docs/skinlib-api.md:L526-L530`.
+- Documented side effect incl. cross-user impact: `docs/skinlib-api.md:L526-L530 ~ **副作用**`.
