@@ -23,6 +23,19 @@ facts:
       timeout_seconds: 5
       interval_seconds: 30
       retries: 3
+  smoke:
+    # 部署后冒烟：真实查一次纹理预览列表。该端点无需鉴权、不依赖特定
+    # 用户数据，确定性返回结构化列表（controllers/list_preview_controller.go
+    # List；docs/skinlib-api.md 有同款 curl 示例）。空库返回空列表也正常，
+    # 故只断言响应结构（items/total 字段在，信封展开到顶层），不断言非空。
+    - name: texture-listpreview
+      method: GET
+      path: /texture/listpreview
+      expect_status: 200
+      timeout_seconds: 10
+      assert:
+        json_field: items
+        contains: total
   depends_on:
     # database 段为启动硬依赖（模板无 redis 段，不依赖 redis）。
     - project: mysql
