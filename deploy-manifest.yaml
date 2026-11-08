@@ -69,7 +69,7 @@ baremetal:
     binary_name: hasl
   artifact:
     source: local_path
-    local_path: /home/lnb/Desktop/HA/HASkinLib/build/hasl
+    local_path: build/hasl
 
 container:
   enabled: false
