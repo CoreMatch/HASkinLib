@@ -1,2 +1,5 @@
 build/*
 .trae/
+# 本机跨仓引用符号链接（绝对路径，机器特定），不进版本库
+HA-Contract
+HRPAuth-Wiki
