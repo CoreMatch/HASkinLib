@@ -66,6 +66,6 @@ standard, standalone migration chain.**
 - Model/table naming: `models/models.go::TextureListSkinBase`,
   `models/models.go::TextureListCape` (unique key `(uid, hash)`,
   column `previewfile`).
-- Deployer template uses `${DB_NAME}`: repo HA-Services-Deployer
+- Cupbearer template uses `${DB_NAME}`: repo HA-Cupbearer
   (@ `657bcb88`),
-  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Services-Deployer/deploy/config/haskinlib.yaml.tmpl:L3-L9 @ 657bcb88`.
+  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Cupbearer/deploy/config/haskinlib.yaml.tmpl:L3-L9 @ 657bcb88`.

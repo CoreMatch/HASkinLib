@@ -73,10 +73,10 @@ the deployment layer points both at the same content (e.g.
 - Yggdrasil-API builds profile texture URLs from callback URL:
   [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth-Yggdrasil-API/services/texture_service.go:L316 @ 124b2fa1`
   (`callbackURL + "/textures/" + hash`).
-- Deployer templates (repo HA-Services-Deployer @ `657bcb88`):
-  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Services-Deployer/deploy/config/haskinlib.yaml.tmpl:L14-L20 @ 657bcb88`
+- Cupbearer templates (repo HA-Cupbearer @ `657bcb88`):
+  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Cupbearer/deploy/config/haskinlib.yaml.tmpl:L14-L20 @ 657bcb88`
   (`storage_dir: ./data/textures`, `preview_storage_dir: ./data/previews`),
-  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Services-Deployer/deploy/config/hrpauth-yggdrasil-api.yaml.tmpl:L72 @ 657bcb88`
+  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Cupbearer/deploy/config/hrpauth-yggdrasil-api.yaml.tmpl:L72 @ 657bcb88`
   (`textures_storage: ./storage`). The differing paths are the intentional
   separation described above; the deployment layer points both at the same
   content.
