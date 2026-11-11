@@ -73,3 +73,11 @@ baremetal:
 
 container:
   enabled: false
+  # 容器形态镜像：已真实发布（Docker Hub，build → push → 回拉 → 挂回
+  # compose 平台冒烟全过）。digest 为生效引用，tag 仅可读别名。
+  # 注：Deployer 运行时的 registry 鉴权拉取本阶段未实现，此段为部署声明。
+  image:
+    source: registry
+    repo: limeight/ha-haskinlib
+    tag: "0.6.0-194d2ef"
+    digest: "sha256:a3f28a2e712505ad221ad837b1772e60222f43567ea8025ee5e57677592fec85"
