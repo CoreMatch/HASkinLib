@@ -38,10 +38,13 @@ in HA-Contract.
 - `docs/skinlib-api.md` remains a *reference* (kept in sync with code), not
   the external contract; treat mismatches with HA-Contract as bugs in this
   doc.
-- Known residual gap: `GET /profile/textures` is implemented but shelved
-  (see [0001](./0001-service-scope-storage-and-preview.md)); its contract
-  status should be re-checked whenever the feature is unshelved —
-  **pending author confirmation** on whether it belongs in the contract.
+- `GET /profile/textures` resolved (author decision 2026-11-12): the
+  endpoint belongs in the contract. It is registered in
+  `haskinlib-business.yaml` (1.1.0) with its real `data` envelope
+  (`{uid, items[]}`) and `type` query parameter, and is covered by the
+  bidirectional route-drift check plus the `TextureRecord` field-level
+  comparison (`controllers/profile_controller.go::profileTextureItem`).
+  The former "shelved" marker in `docs/skinlib-api.md` is removed.
 
 ## Evidence
 
@@ -51,6 +54,6 @@ in HA-Contract.
   HA-Contract, `/home/lnb/Desktop/HA/HA-Contract/docs/api/README.md`
   (Unified Constraints section).
 - In-repo synced reference doc: `docs/skinlib-api.md` (endpoint list at
-  `docs/skinlib-api.md:L3-L10 fp=2613f4d5 ~ 当前版本已开放以下接口：`); legacy docs archived under HA-Contract
+  `docs/skinlib-api.md:L3-L10 fp=ddcbadfe ~ 当前版本已开放以下接口：`); legacy docs archived under HA-Contract
   `/home/lnb/Desktop/HA/hrpauth/HASkinLib/knowledge/archive` (referenced
   from `README.md:L14-L14 fp=21d18dc3 ~ 旧文档已归档至 [archive/docs/HASkinLib](https://github.`).

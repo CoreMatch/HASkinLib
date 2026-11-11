@@ -7,7 +7,7 @@
 - `GET /texture/preview/:preview_file`：直接访问预览图文件
 - `GET /texture/pull/:hash`：根据哈希值直接拉取材质原文件
 - `POST /texture/delete`：删除当前用户的指定材质（数据库记录 + 磁盘文件）
-- `GET /profile/textures`：获取当前登录用户的材质列表（**[状态：暂时搁置]**）
+- `GET /profile/textures`：获取当前登录用户的材质列表
 
 说明：
 
@@ -440,8 +440,10 @@ curl "http://127.0.0.1:2701/texture/pull/e3b0c44298fc1c149afbf4c8996fb92427ae41e
 
 ## 5. 获取个人材质列表
 
-> **注意：此接口当前状态为 [暂时搁置]**。
-> 后端已完成初步实现，但根据开发计划，该功能目前不对前端开放或暂不启用。
+> **状态（2026-11-12）**：作者决定该接口属于正式契约面，已登记于
+> HA-Contract `docs/api/openapi/haskinlib-business.yaml`（1.1.0），并接入
+> 双向防漂移与字段级比对。`data` 为对象 `{uid, items[]}`，`items` 按
+> `id desc` 排序。
 
 **端点**
 
