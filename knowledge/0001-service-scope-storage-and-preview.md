@@ -52,7 +52,7 @@ sessions, and does not talk to Minecraft clients directly.
 
 - Routes: `main.go::main`.
 - Default port `:2701`: `config/config.go (field: port)`; also
-  `/home/lnb/Desktop/HA/HASkinLib/build/config.yaml (field: port)`
+  `/home/lnb/Desktop/HA/hrpauth/HASkinLib/build/config.yaml (field: port)`
   (gitignored local runtime config).
 - Page size 16: `controllers/list_preview_controller.go::defaultListPreviewPageSize`.
 - Tag filtering via `FIND_IN_SET`: `controllers/list_preview_controller.go::querySkinPreviewItems`,
