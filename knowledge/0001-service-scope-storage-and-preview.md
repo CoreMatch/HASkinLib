@@ -26,9 +26,9 @@ preview rendering**:
 - `GET /texture/pull/:hash` — public raw PNG serving by SHA-256 hash.
 - `POST /texture/delete` — authenticated deletion of the caller's own
   texture (see [0006](./0006-delete-semantics-force-file-removal.md)).
-- `GET /profile/textures` — authenticated per-user listing. Implemented,
-  but marked "temporarily shelved" in the in-repo API doc; the route is
-  still registered.
+- `GET /profile/textures` — authenticated per-user listing. Part of the
+  contract surface (author decision 2026-11-12); registered in
+  HA-Contract `haskinlib-business.yaml` 1.1.0.
 
 It owns its own MySQL tables (`hasl_texture_list_skin`,
 `hasl_texture_list_cape`) and its own on-disk storage directories. It does
@@ -39,8 +39,9 @@ sessions, and does not talk to Minecraft clients directly.
 
 - Costs: gallery listing uses `FIND_IN_SET` tag filtering on a varchar
   column (no tag index), fine at current scale but a known limit.
-- Costs: `GET /profile/textures` stays compiled and routed while shelved;
-  operators should treat it as not part of the product surface.
+- `GET /profile/textures` is contract surface (author decision 2026-11-12);
+  it is covered by HA-Contract's route-drift and field-level checks like the
+  other routes, so external changes to it are drift-gated.
 - Constraint: anything Minecraft-protocol-facing belongs to
   HRPAuth-Yggdrasil-API / HASkinProxy, not here; adding Yggdrasil routes
   here would violate this boundary.
@@ -57,9 +58,11 @@ sessions, and does not talk to Minecraft clients directly.
 - Page size 16: `controllers/list_preview_controller.go::defaultListPreviewPageSize`.
 - Tag filtering via `FIND_IN_SET`: `controllers/list_preview_controller.go::querySkinPreviewItems`,
   `controllers/list_preview_controller.go::queryCapePreviewItems`.
-- `/profile/textures` shelved status: `docs/skinlib-api.md:L10-L10 fp=e31ed556 ~ - `GET /profile/textures`：获取当前登录用户的材质列表（**[状态：暂时` and
-  `docs/skinlib-api.md:L443-L444 fp=9171441b ~ > **注意：此接口当前状态为 [暂时搁置]**。` ("状态：暂时搁置"); route still registered at
-  `main.go::GetMyTextures`. Shelving is a documented plan statement; the
-  reason for shelving is not recorded in the repo — **pending author
-  confirmation**.
+- `/profile/textures` contract status: `docs/skinlib-api.md:L10-L10 fp=0885fe64` (listed
+  without a shelved marker) and `docs/skinlib-api.md:L443-L446 fp=958fe983` (status note
+  recording the 2026-11-12 decision); route registered at
+  `main.go::GetMyTextures`. The earlier "temporarily shelved" marker and the
+  pending-author-confirmation gap were removed when the author confirmed the
+  endpoint belongs in the contract (HA-Contract `haskinlib-business.yaml`
+  1.1.0).
 - Positioning as HA-Contract skin-library component: `README.md:L3-L3 fp=729b6ac1 ~ 本项目是 HA-Contract 的皮肤库服务组件。`.
