@@ -40,7 +40,7 @@ standard, standalone migration chain.**
   with comment "defaults follow HRPAuth to ease sharing the same database
   server". This is connection-level convenience only — the migration guard
   (point 2) is what enforces database-level independence. Deployments are
-  expected to set `database.db_name` to a dedicated database; the deployer
+  expected to set `database.db_name` to a dedicated database; Cupbearer
   template injects `${DB_NAME}` rather than hardcoding `hrpa`.
 - Constraint: GORM models and migration SQL must stay aligned manually
   (models declare the same columns/indexes as the baseline SQL, including

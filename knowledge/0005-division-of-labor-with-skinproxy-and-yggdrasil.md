@@ -46,7 +46,7 @@ the deployment layer points both at the same content (e.g.
   points are **intentional separation, not a gap** — storage and management
   belong to HASkinLib, while the protocol surface reads from Yggdrasil-API's
   own local directory, and the deployment layer wires the two to the same
-  content. The deployer templates intentionally use different relative paths
+  content. The Cupbearer templates intentionally use different relative paths
   (`./data/textures` for HASkinLib vs `./storage` textures_storage for
   Yggdrasil-API); that separation is by design.
 - Constraint: preview file naming (`<hash>_<type>.webp`) and the flat
