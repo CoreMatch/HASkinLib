@@ -63,25 +63,25 @@ the deployment layer points both at the same content (e.g.
 - HASkinLib pull endpoint (public raw bytes): `controllers/pull_texture_controller.go::Pull`.
 - Yggdrasil-API serves textures from local disk (repo HRPAuth-Yggdrasil-API
   @ `124b2fa1`):
-  [xref] `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/services/texture_service.go:L232-L243 @ 124b2fa1`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth-Yggdrasil-API/services/texture_service.go:L232-L243 @ 124b2fa1`
   (`GetTexturePath` = `<textures_storage>/textures/<hash>`),
-  [xref] `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/services/texture_service.go:L41-L42 @ 124b2fa1`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth-Yggdrasil-API/services/texture_service.go:L41-L42 @ 124b2fa1`
   (subdir constants),
-  [xref] `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/controllers/yggdrasil_controller.go:L575-L592 @ 124b2fa1`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth-Yggdrasil-API/controllers/yggdrasil_controller.go:L575-L592 @ 124b2fa1`
   (`DownloadTexture`), routes in
-  [xref] `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/main.go:L187-L189 @ 124b2fa1`.
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth-Yggdrasil-API/main.go:L187-L189 @ 124b2fa1`.
 - Yggdrasil-API builds profile texture URLs from callback URL:
-  [xref] `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/services/texture_service.go:L316 @ 124b2fa1`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth-Yggdrasil-API/services/texture_service.go:L316 @ 124b2fa1`
   (`callbackURL + "/textures/" + hash`).
 - Deployer templates (repo HA-Services-Deployer @ `657bcb88`):
-  [xref] `/home/lnb/Desktop/HA/HA-Services-Deployer/deploy/config/haskinlib.yaml.tmpl:L14-L20 @ 657bcb88`
+  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Services-Deployer/deploy/config/haskinlib.yaml.tmpl:L14-L20 @ 657bcb88`
   (`storage_dir: ./data/textures`, `preview_storage_dir: ./data/previews`),
-  [xref] `/home/lnb/Desktop/HA/HA-Services-Deployer/deploy/config/hrpauth-yggdrasil-api.yaml.tmpl:L72 @ 657bcb88`
+  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Services-Deployer/deploy/config/hrpauth-yggdrasil-api.yaml.tmpl:L72 @ 657bcb88`
   (`textures_storage: ./storage`). The differing paths are the intentional
   separation described above; the deployment layer points both at the same
   content.
 - HASkinProxy's upstream is the Yggdrasil surface, not HASkinLib: repo
   HASkinProxy,
-  [xref] `/home/lnb/Desktop/HA/HASkinProxy/internal/hrpauth/client.go::FetchTexture`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HASkinProxy/internal/hrpauth/client.go::FetchTexture`
   (`FetchTexture` → `{base}/textures/:hash`); see HASkinProxy knowledge
   base entry 0002.

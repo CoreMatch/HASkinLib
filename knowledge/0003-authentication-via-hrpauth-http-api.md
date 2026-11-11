@@ -62,13 +62,13 @@ Authenticate through HRPAuth's **HTTP API**, not a shared library:
   `config/config.go (field: base_url)`.
 - Upstream side (repo HRPAuth @ `8dd67593`): routes registered under an
   empty group prefix —
-  [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L174 @ 8dd67593`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth/main.go:L174 @ 8dd67593`
   (`api := r.Group("")`),
-  [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L197 @ 8dd67593`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth/main.go:L197 @ 8dd67593`
   (`POST /internal/verify-token`),
-  [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L201 @ 8dd67593`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth/main.go:L201 @ 8dd67593`
   (`GET /services/users/:uuid`),
-  [xref] `/home/lnb/Desktop/HA/HRPAuth/main.go:L180 @ 8dd67593`
+  [xref] `/home/lnb/Desktop/HA/hrpauth/HRPAuth/main.go:L180 @ 8dd67593`
   (`POST /oauth/token`). Paths therefore match the client.
 - Module path lineage: `main.go (field: github.com/lnb/HRPAuth-Backend-Go)`
   (`github.com/lnb/HRPAuth-Backend-Go/...` imports).

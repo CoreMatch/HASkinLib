@@ -68,4 +68,4 @@ standard, standalone migration chain.**
   column `previewfile`).
 - Deployer template uses `${DB_NAME}`: repo HA-Services-Deployer
   (@ `657bcb88`),
-  [xref] `/home/lnb/Desktop/HA/HA-Services-Deployer/deploy/config/haskinlib.yaml.tmpl:L3-L9 @ 657bcb88`.
+  [xref] `/home/lnb/Desktop/HA/maintanance/HA-Services-Deployer/deploy/config/haskinlib.yaml.tmpl:L3-L9 @ 657bcb88`.
