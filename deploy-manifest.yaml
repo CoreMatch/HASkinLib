@@ -81,5 +81,5 @@ container:
   image:
     source: registry
     repo: limeight/ha-haskinlib
-    tag: "0.6.0-46f8663"
+    tag: "0.6.0-d9ec5a1"
     digest: "sha256:56350ff11f45f183f147c60ab147305856f13142c648a9960388670d287c7f40"
