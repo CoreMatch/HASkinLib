@@ -1,25 +1,32 @@
-# HASkinLib
+<div align="center">
+  <h1>HASkinLib</h1>
+  <p><strong>A home for every skin and cape worth keeping.</strong></p>
+  <p><a href="./README.zh-CN.md">简体中文</a></p>
+</div>
 
-本项目是 HA-Contract 的皮肤库服务组件。
+HASkinLib is the HA ecosystem's skin and cape library for players and services that need upload, storage, preview, and public retrieval.
 
-## 文档
+It pairs MySQL storage with OAuth2-protected user operations and has no Redis dependency.
 
-所有接口文档和开发规范已统一收口至根目录：
-- [API 标准与规范](https://github.com/CoreMatch/HA-Contract/blob/main/docs/api/README.md)
-- [OpenAPI 定义](https://github.com/CoreMatch/HA-Contract/blob/main/docs/api/openapi/haskinlib-business.yaml)（2026-11-04 按当前实现重建）
-- [错误码表](https://github.com/CoreMatch/HA-Contract/blob/main/docs/api/error-codes.md)
+## Why HASkinLib
 
-本仓库内的 [docs/skinlib-api.md](./docs/skinlib-api.md) 继续作为与代码同步维护的接口参考。
+- **Upload and preview.** Inspect skins and capes before publishing them.
+- **Fit every model.** Support both default and slim player models.
+- **Keep legacy capes.** Preserve access to cape styles from earlier Minecraft generations.
+- **Browse large libraries.** Find textures with tags and pagination, backed by WebP previews.
+- **Serve by public hash.** Retrieve shared texture data without a user session.
+- **Use a simple footprint.** Rely on MySQL without Redis.
 
-旧文档已归档至 [archive/docs/HASkinLib](https://github.com/CoreMatch/HA-Contract/tree/main/archive/docs/HASkinLib)。
+## Learn more
 
-## 部署事实
+- [Skin library API](docs/skinlib-api.md) — local interface reference
+- [HA Wiki](https://wiki.mcnb.dev/) — ecosystem documentation
+- [HA-Contract](https://github.com/CoreMatch/HA-Contract) — ecosystem API contracts
 
-部署事实以仓库根目录的 [`deploy-manifest.yaml`](deploy-manifest.yaml) 为准
-（供 HA-Cupbearer 编排器读取；`manager: aapanel` 表示进程由面板管理，
-编排器只读不碰）：
+## Limits
 
-- 监听 `:2701`（对外）；健康端点 `GET /health`。
-- 依赖 MySQL；运行时经 `core_api` 调用 HRPAuth（非启动硬依赖）。无 Redis 依赖。
-- 配置文件 `config.yaml`（模板版本 7）；数据库迁移启动时自动执行。
-- 数据目录：`./data/textures`、`./data/previews`。
+Public retrieval is available; texture detail and edit APIs are not currently provided.
+
+## License & provenance
+
+[AGPL-3.0](LICENSE). Source: [CoreMatch/HASkinLib](https://github.com/CoreMatch/HASkinLib).
