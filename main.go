@@ -75,7 +75,7 @@ func main() {
 	r.POST("/texture/delete", deleteTextureCtrl.DeleteTexture)
 	r.GET("/profile/textures", profileCtrl.GetMyTextures)
 
-	log.Printf("server listening on %s", config.AppConfig.Server.Port)
+	log.Printf("Armorial Skin Library listening on %s", config.AppConfig.Server.Port)
 
 	r.Run(config.AppConfig.Server.Port)
 }

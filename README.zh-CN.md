@@ -1,14 +1,14 @@
 <div align="center">
-  <h1>HASkinLib</h1>
+  <h1>Armorial Skin Library</h1>
   <p><strong>为每一款值得珍藏的皮肤与披风安家。</strong></p>
   <p><a href="./README.md">English</a></p>
 </div>
 
-HASkinLib 是 HA 生态的皮肤与披风库，为需要上传、存储、预览与公开获取的玩家和服务而建。
+Armorial Skin Library 是 Armorial 生态的皮肤与披风库，为需要上传、存储、预览与公开获取的玩家和服务而建。
 
 它采用 MySQL 存储，用户操作由 OAuth2 保护，并且不依赖 Redis。
 
-## 为什么选择 HASkinLib
+## 为什么选择 Armorial Skin Library
 
 - **上传并预览。** 在发布前检查皮肤与披风效果。
 - **适配各种模型。** 同时支持默认与纤细玩家模型。
@@ -20,8 +20,8 @@ HASkinLib 是 HA 生态的皮肤与披风库，为需要上传、存储、预览
 ## 进一步了解
 
 - [皮肤库 API](docs/skinlib-api.md) — 本地接口参考
-- [HA Wiki](https://wiki.mcnb.dev/) — 生态文档
-- [HA-Contract](https://github.com/CoreMatch/HA-Contract) — 生态 API 契约
+- [Armorial Wiki](https://wiki.mcnb.dev/) — 生态文档
+- [Armorial API Contracts](https://github.com/CoreMatch/HA-Contract) — 生态 API 契约
 
 ## 限制
 

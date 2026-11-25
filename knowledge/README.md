@@ -10,12 +10,12 @@ self-hosting and maintenance.
   record decisions, their costs, and the evidence behind them.
 - **They do not define externally visible behavior.** External behavior
   (API paths, request/response shapes, error codes) is defined by
-  [HA-Contract](https://github.com/CoreMatch/HA-Contract) — in particular
+  [Armorial Contract](https://github.com/CoreMatch/HA-Contract) — in particular
   `docs/api/openapi/haskinlib-business.yaml`, `docs/api/README.md` and
   `docs/api/error-codes.md`.
-- If an entry here conflicts with HA-Contract, **fix the entry, not the
+- If an entry here conflicts with Armorial Contract, **fix the entry, not the
   contract**. If the code conflicts with the contract, that is a drift
-  bug: record it in an entry and resolve it through HA-Contract's change
+  bug: record it in an entry and resolve it through Armorial Contract's change
   process.
 
 ## Rules
@@ -42,7 +42,7 @@ self-hosting and maintenance.
 | [0004](./0004-dedicated-database-and-migrations.md) | Dedicated database and standalone migrations | Accepted | HASkinLib runs golang-migrate on its own migration chain and refuses to start against the legacy shared `schema_migrations` table (option 1: dedicated database). |
 | [0005](./0005-division-of-labor-with-skinproxy-and-yggdrasil.md) | Division of labor with HASkinProxy and Yggdrasil-API | Accepted | HASkinLib stores and manages textures; HRPAuth-Yggdrasil-API serves the Minecraft-facing surface; HASkinProxy translates to CSL. The texture-byte handoff is filesystem-level, not HTTP. |
 | [0006](./0006-delete-semantics-force-file-removal.md) | Delete semantics: forced file removal | Accepted | `POST /texture/delete` removes the caller's DB row and force-deletes the on-disk PNG and WebP even when other users reference the same hash. |
-| [0007](./0007-contract-status-and-missing-yaml-handling.md) | Contract status and missing-YAML handling | Accepted | The external contract is HA-Contract's `haskinlib-business.yaml`, rebuilt from the implementation; while a contract file is missing, code + [`archive/skinlib-api.md`](./archive/skinlib-api.md) are the implementation reference, and gaps are fixed in HA-Contract, not here. |
+| [0007](./0007-contract-status-and-missing-yaml-handling.md) | Contract status and missing-YAML handling | Accepted | The external contract is Armorial Contract's `haskinlib-business.yaml`, rebuilt from the implementation; while a contract file is missing, code + [`archive/skinlib-api.md`](./archive/skinlib-api.md) are the implementation reference, and gaps are fixed in Armorial Contract, not here. |
 
 `archive/` holds historical snapshots migrated back from HA-Contract
 (`archive/docs/HASkinLib/`: `ROOT_README.md`, `skinlib-api.md`) on 2026-11-07

@@ -1,14 +1,14 @@
 <div align="center">
-  <h1>HASkinLib</h1>
+  <h1>Armorial Skin Library</h1>
   <p><strong>A home for every skin and cape worth keeping.</strong></p>
   <p><a href="./README.zh-CN.md">简体中文</a></p>
 </div>
 
-HASkinLib is the HA ecosystem's skin and cape library for players and services that need upload, storage, preview, and public retrieval.
+Armorial Skin Library is the Armorial ecosystem's skin and cape library for players and services that need upload, storage, preview, and public retrieval.
 
 It pairs MySQL storage with OAuth2-protected user operations and has no Redis dependency.
 
-## Why HASkinLib
+## Why Armorial Skin Library
 
 - **Upload and preview.** Inspect skins and capes before publishing them.
 - **Fit every model.** Support both default and slim player models.
@@ -20,8 +20,8 @@ It pairs MySQL storage with OAuth2-protected user operations and has no Redis de
 ## Learn more
 
 - [Skin library API](docs/skinlib-api.md) — local interface reference
-- [HA Wiki](https://wiki.mcnb.dev/) — ecosystem documentation
-- [HA-Contract](https://github.com/CoreMatch/HA-Contract) — ecosystem API contracts
+- [Armorial Wiki](https://wiki.mcnb.dev/) — ecosystem documentation
+- [Armorial API Contracts](https://github.com/CoreMatch/HA-Contract) — ecosystem API contracts
 
 ## Limits
 

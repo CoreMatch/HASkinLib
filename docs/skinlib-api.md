@@ -1,4 +1,4 @@
-# HASkinLib API 文档
+# Armorial Skin Library API 文档
 
 当前版本已开放以下接口：
 

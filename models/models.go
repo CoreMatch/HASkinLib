@@ -6,7 +6,7 @@ import (
 	"github.com/lnb/HRPAuth-Backend-Go/config"
 )
 
-// AuthenticatedUser 是 HASkinLib 业务层消费的最小用户映射。
+// AuthenticatedUser 是 Armorial Skin Library 业务层消费的最小用户映射。
 type AuthenticatedUser struct {
 	UID      uint
 	UUID     string

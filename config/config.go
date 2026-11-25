@@ -23,7 +23,7 @@ type ServerConfig struct {
 	CORS string
 }
 
-// DatabaseConfig 数据库连接配置，字段与 HRPAuth 保持一致。
+// DatabaseConfig 数据库连接配置，字段与 Armorial 保持一致。
 type DatabaseConfig struct {
 	Host        string
 	DBName      string
@@ -74,7 +74,7 @@ func Load() {
 	configPath := filepath.Join(ConfigFileDir, ConfigFileName)
 
 	// 默认值，config 文件缺失或未配置时兜底。
-	// 数据库默认值沿用 HRPAuth，便于共用同一数据库。
+	// 数据库默认值沿用 Armorial，便于共用同一数据库。
 	port := ":2701"
 	cors := "*"
 	database := DatabaseConfig{

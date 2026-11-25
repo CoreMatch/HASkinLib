@@ -306,7 +306,7 @@ func (sc *StartupController) ensureStandardMigrationsTable(db *sql.DB, dbName st
 	}
 
 	if serviceColumnCount > 0 {
-		return fmt.Errorf("legacy shared schema_migrations table detected in database %q; option 1 requires a dedicated HASkinLib database or a fresh standard schema_migrations table without the service column", dbName)
+		return fmt.Errorf("legacy shared schema_migrations table detected in database %q; option 1 requires a dedicated Armorial Skin Library database or a fresh standard schema_migrations table without the service column", dbName)
 	}
 
 	return nil

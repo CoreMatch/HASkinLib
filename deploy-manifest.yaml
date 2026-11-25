@@ -1,11 +1,11 @@
-# HASkinLib 部署声明（deploy-manifest v1）
+# Armorial Skin Library 部署声明（deploy-manifest v1）
 # schema 依据：HA-Cupbearer internal/manifest/（SchemaVersion=1）
 manifest_version: 1
 kind: service
 project: haskinlib
-display_name: HASkinLib
+display_name: Armorial Skin Library
 group: satellite
-# HASkinLib 1.3.0 统一生态版本。
+# Armorial Skin Library 1.3.0 统一生态版本。
 service_version: "1.3.0"
 
 facts:
@@ -40,7 +40,7 @@ facts:
     # database 段为启动硬依赖（模板无 redis 段，不依赖 redis）。
     - project: mysql
       kind: required
-    # core_api（运行时调 HRPAuth /internal/verify-token 等，模板注释）；
+    # core_api（运行时调 Armorial /internal/verify-token 等，模板注释）；
     # 启动不排序——compose 中 haskinlib 无 depends_on，故记 optional。
     - project: hrpauth
       kind: optional
